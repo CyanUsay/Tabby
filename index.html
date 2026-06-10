@@ -19,7 +19,10 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="app-title">TABBY</div>
+    <div>
+      <div class="app-title">TABBY</div>
+      <div id="today-line" class="today-line"></div>
+    </div>
     <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">☀️</button>
   </header>
 
@@ -31,14 +34,14 @@
   </div>
 
   <main>
-    <!-- 双周日历：上周 + 这周，状态条与观察标记 -->
+    <!-- 双周日历：上周 + 这周。经期/PMS = 荧光笔涂抹，出血/果冻 = 下划线 -->
     <section class="card cal-card">
       <div id="biweek" class="biweek"></div>
       <div class="cal-legend">
-        <span class="lg"><i class="lg-bar period"></i>经期</span>
-        <span class="lg"><i class="lg-bar pms"></i>PMS</span>
-        <span class="lg"><i class="lg-dot bleed"></i>出血</span>
-        <span class="lg"><i class="lg-dot jelly"></i>果冻</span>
+        <span class="lg"><i class="lg-hl period"></i>经期</span>
+        <span class="lg"><i class="lg-hl pms"></i>PMS</span>
+        <span class="lg"><i class="lg-ul bleed"></i>出血</span>
+        <span class="lg"><i class="lg-ul jelly"></i>果冻</span>
       </div>
     </section>
 
@@ -46,7 +49,16 @@
     <section class="card checkin-card">
       <div class="done-wrap">
         <button id="done-btn" class="done-btn">
-          <span class="done-fill"></span>
+          <svg class="done-ring" viewBox="0 0 112 112">
+            <defs>
+              <linearGradient id="doneGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#e88aa0" />
+                <stop offset="100%" stop-color="#7eb3e8" />
+              </linearGradient>
+            </defs>
+            <circle class="done-track" cx="56" cy="56" r="50" />
+            <circle id="done-arc" class="done-arc" cx="56" cy="56" r="50" stroke="url(#doneGrad)" />
+          </svg>
           <span id="done-label" class="done-label">长按打卡</span>
         </button>
         <div class="done-sub" id="done-sub">今天正常完成</div>
@@ -59,28 +71,19 @@
         </div>
         <div class="stat">
           <span class="stat-icon" data-tint="purple">☾</span>
-          <span class="stat-label">经期结束后</span>
-          <span id="stat-since" class="stat-value">—</span>
+          <span id="stat-recent-label" class="stat-label">经期结束后</span>
+          <span id="stat-recent" class="stat-value">—</span>
         </div>
         <div class="stat">
           <span class="stat-icon" data-tint="orange">❀</span>
-          <span class="stat-label">排卵后</span>
-          <span id="stat-ovulation" class="stat-value">—</span>
+          <span class="stat-label">预测经期</span>
+          <span id="stat-predict" class="stat-value">—</span>
         </div>
         <div class="stat">
           <span class="stat-icon" data-tint="pink">♥</span>
           <span class="stat-label">今日症状</span>
           <span id="stat-symptoms" class="stat-value">0 项</span>
         </div>
-      </div>
-    </section>
-
-    <!-- 聊天区（页面中部） -->
-    <section class="chat-inline">
-      <div id="chat-log" class="chat-log"></div>
-      <div class="chat-row">
-        <input id="chat-input" type="text" placeholder="跟 Tabby 说点什么喵…" enterkeyhint="send" />
-        <button id="chat-send" aria-label="发送">↑</button>
       </div>
     </section>
 
@@ -103,7 +106,17 @@
         </div>
       </div>
     </section>
+
+    <section id="chat-log" class="chat-log"></section>
   </main>
+
+  <div class="chat-bar">
+    <div class="inner">
+      <span id="chat-cat" class="chat-cat">(=˘ω˘=) zzZ</span>
+      <input id="chat-input" type="text" placeholder="跟 Tabby 说点什么喵…" enterkeyhint="send" />
+      <button id="chat-send" aria-label="发送">↑</button>
+    </div>
+  </div>
 
   <script type="module" src="./js/app.js"></script>
 </body>

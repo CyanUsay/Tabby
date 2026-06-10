@@ -74,3 +74,12 @@ export function sanitizeCycle(cycle) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(cycle.date || '')) return null;
   return { event: cycle.event, date: cycle.date };
 }
+
+// 规整 remove（撤销/删除指令）：只接受白名单动作
+export function sanitizeRemove(remove) {
+  if (!remove || typeof remove !== 'object') return null;
+  if (['last', 'cycle_today', 'symptoms_today'].includes(remove.what)) {
+    return { what: remove.what };
+  }
+  return null;
+}

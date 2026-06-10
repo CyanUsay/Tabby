@@ -40,7 +40,7 @@ function runs(dateList, maxGap) {
 //   spottingToday,        今天是否为孤立少量出血（不并入任何经期段）
 // }
 export function deriveState(events, todayStr, cfg) {
-  const { periodLength, pmsMaxDays = 14, bleedGapDays = 1 } = cfg;
+  const { periodLength, pmsMaxDays = 14, bleedGapDays = 1, lutealDays = 14 } = cfg;
 
   // ---- 出血段：light+heavy 合并分段，含 heavy 的段才是经期 ----
   const heavySet = new Set(dates(events, todayStr, 'bleed_heavy', 'period_start'));
@@ -92,16 +92,23 @@ export function deriveState(events, todayStr, cfg) {
   const jellies = dates(events, todayStr, 'jelly');
   let ovulationDate = null;
   let daysSinceOvulation = null;
+  let predictedPeriod = null; // 排卵日 + 黄体期 ≈ 预测经期（周期不准时唯一可靠的预估）
   if (jellies.length) {
     const jellyRuns = runs(jellies, 0);
     const lastRun = jellyRuns[jellyRuns.length - 1];
     ovulationDate = lastRun[lastRun.length - 1];
     // 经期已经来了 → 这次排卵计数完成使命，不再显示
     const consumed = periodStart && periodStart >= ovulationDate;
-    daysSinceOvulation = consumed ? null : diffDays(ovulationDate, todayStr);
+    if (!consumed) {
+      daysSinceOvulation = diffDays(ovulationDate, todayStr);
+      predictedPeriod = addDays(ovulationDate, lutealDays);
+    }
   }
 
-  return { mode, dayN, periodStart, daysSinceEnd, ovulationDate, daysSinceOvulation, spottingToday };
+  return {
+    mode, dayN, periodStart, daysSinceEnd,
+    ovulationDate, daysSinceOvulation, predictedPeriod, spottingToday,
+  };
 }
 
 // "今天经期第N天" → 反推起始日期

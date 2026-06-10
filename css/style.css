@@ -68,7 +68,8 @@ body {
   font-size: 16px;
   line-height: 1.5;
   padding-top: env(safe-area-inset-top);
-  padding-bottom: calc(env(safe-area-inset-bottom) + 28px);
+  /* 底部聊天条高度 + home indicator */
+  padding-bottom: calc(env(safe-area-inset-bottom) + 110px);
   min-height: 100vh;
   transition: color 0.3s;
 }
@@ -93,7 +94,7 @@ button {
 .chip,
 .slot-card,
 .custom-symptom input,
-.chat-row input {
+.chat-bar input {
   background: var(--glass);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
@@ -115,6 +116,12 @@ header.topbar {
   font-weight: 700;
   letter-spacing: 5px;
   color: var(--muted);
+}
+
+.today-line {
+  font-size: 15px;
+  font-weight: 700;
+  margin-top: 2px;
 }
 
 .theme-toggle {
@@ -167,11 +174,13 @@ header.topbar {
 }
 
 .bw-day {
+  position: relative;
   text-align: center;
   padding: 2px 0 4px;
 }
 
 .bw-day .num {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -193,57 +202,68 @@ header.topbar {
   color: var(--bg-base);
 }
 
-/* 状态条贴在数字下方，相邻同色自然连成一条，段首段尾带圆角 */
-.bw-day .bar {
+/* 荧光笔涂抹（经期/PMS）：垫在数字后面，相邻同色连成一条 */
+.bw-day .hl {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 4px;
+  height: 22px;
+}
+
+.bw-day .hl.period {
+  background: color-mix(in srgb, var(--accent) 38%, transparent);
+}
+
+.bw-day .hl.pms {
+  background: color-mix(in srgb, #9d8fe0 34%, transparent);
+}
+
+.bw-day .hl.run-start {
+  left: 4px;
+  border-top-left-radius: 11px;
+  border-bottom-left-radius: 11px;
+}
+
+.bw-day .hl.run-end {
+  right: 4px;
+  border-top-right-radius: 11px;
+  border-bottom-right-radius: 11px;
+}
+
+/* 下划线（出血/果冻观察）：相邻有记录的日子连成一条线 */
+.bw-day .uls {
   display: block;
-  height: 4px;
   margin-top: 3px;
+}
+
+.bw-day .ul {
+  display: block;
+  height: 3px;
+  margin-top: 2px;
   background: transparent;
 }
 
-.bw-day .bar.period {
-  background: var(--accent);
-}
-
-.bw-day .bar.pms {
-  background: #9d8fe0;
-}
-
-.bw-day .bar.run-start {
-  margin-left: 3px;
-  border-top-left-radius: 4px;
-  border-bottom-left-radius: 4px;
-}
-
-.bw-day .bar.run-end {
-  margin-right: 3px;
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
-}
-
-/* 观察标记点（出血/果冻） */
-.bw-day .marks {
-  display: flex;
-  justify-content: center;
-  gap: 3px;
-  height: 6px;
-  margin-top: 3px;
-}
-
-.bw-day .mk {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-}
-
-.mk.bleed,
-.lg-dot.bleed {
+.bw-day .ul.bleed,
+.lg-ul.bleed {
   background: #d8607f;
 }
 
-.mk.jelly,
-.lg-dot.jelly {
+.bw-day .ul.jelly,
+.lg-ul.jelly {
   background: var(--blue);
+}
+
+.bw-day .ul.run-start {
+  margin-left: 5px;
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+
+.bw-day .ul.run-end {
+  margin-right: 5px;
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
 }
 
 .cal-legend {
@@ -261,24 +281,24 @@ header.topbar {
   gap: 4px;
 }
 
-.lg-bar {
+.lg-hl {
+  width: 16px;
+  height: 10px;
+  border-radius: 5px;
+}
+
+.lg-hl.period {
+  background: color-mix(in srgb, var(--accent) 38%, transparent);
+}
+
+.lg-hl.pms {
+  background: color-mix(in srgb, #9d8fe0 34%, transparent);
+}
+
+.lg-ul {
   width: 14px;
-  height: 4px;
+  height: 3px;
   border-radius: 2px;
-}
-
-.lg-bar.period {
-  background: var(--accent);
-}
-
-.lg-bar.pms {
-  background: #9d8fe0;
-}
-
-.lg-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
 }
 
 /* ---------- 打卡卡 ---------- */
@@ -296,16 +316,18 @@ header.topbar {
   min-width: 118px;
 }
 
+/* 半透明玻璃圆 + 长按时渐变进度环转满一圈 */
 .done-btn {
   position: relative;
-  width: 108px;
-  height: 108px;
+  width: 112px;
+  height: 112px;
   border-radius: 50%;
-  border: none;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  box-shadow: var(--shadow);
   cursor: pointer;
-  background: linear-gradient(140deg, #e88aa0 0%, #c3a3d6 55%, #7eb3e8 100%);
-  box-shadow: 0 8px 22px rgba(214, 128, 154, 0.4);
-  overflow: hidden;
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
@@ -314,35 +336,41 @@ header.topbar {
 }
 
 .done-btn:active {
-  transform: scale(0.96);
+  transform: scale(0.97);
 }
 
-/* 长按时从底部涨起来的水位 */
-.done-fill {
+.done-ring {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 0%;
-  background: rgba(255, 255, 255, 0.45);
+  inset: -1px;
+  transform: rotate(-90deg);
+  pointer-events: none;
 }
 
-.done-btn.pressing .done-fill {
-  height: 100%;
-  transition: height 0.7s linear;
+.done-track,
+.done-arc {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
 }
 
-.done-btn.done {
-  background: linear-gradient(140deg, #9dbb9a 0%, #7eb3e8 100%);
+.done-track {
+  stroke: rgba(255, 255, 255, 0.4);
+}
+
+[data-theme='dark'] .done-track {
+  stroke: rgba(255, 255, 255, 0.1);
+}
+
+.done-btn.done .done-track {
+  stroke: color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
 .done-label {
   position: relative;
-  color: #fff;
-  font-size: 15px;
+  color: var(--text);
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: 1px;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
 .done-sub {
@@ -510,6 +538,16 @@ header.topbar {
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+.slot-chev {
+  color: var(--faint);
+  font-size: 13px;
+  transition: transform 0.2s;
+}
+
+.slot-card.open .slot-chev {
+  transform: rotate(180deg);
 }
 
 .slot-name {
@@ -822,8 +860,7 @@ header.topbar {
 
 /* ---------- 聊天区 ---------- */
 .chat-log {
-  max-height: 46vh;
-  overflow-y: auto;
+  margin-top: 14px;
 }
 
 .chat-log:empty {
@@ -952,6 +989,70 @@ header.topbar {
   color: var(--faint);
   font-size: 14px;
   padding: 2px 6px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.preview-row .mark.off-mark {
+  background: #d8607f;
+}
+
+/* "今天都吃了"折叠摘要行 */
+.preview-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 2px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent-deep);
+}
+
+/* 症状程度分段按钮（轻/中/重） */
+.preview-row.sym {
+  cursor: default;
+}
+
+.seg {
+  display: inline-flex;
+  gap: 5px;
+}
+
+.seg-btn {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.3);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+[data-theme='dark'] .seg-btn {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.seg-btn.on.sev-1 {
+  background: #f4cbd6;
+  border-color: transparent;
+  color: #a05670;
+  font-weight: 700;
+}
+
+.seg-btn.on.sev-2 {
+  background: #e69cb2;
+  border-color: transparent;
+  color: #fff;
+  font-weight: 700;
+}
+
+.seg-btn.on.sev-3 {
+  background: #cf6d8c;
+  border-color: transparent;
+  color: #fff;
+  font-weight: 700;
 }
 
 .preview-actions {
@@ -991,56 +1092,108 @@ header.topbar {
   background: rgba(255, 255, 255, 0.06);
 }
 
-/* 聊天区（页面中部内联） */
-.chat-inline {
-  margin: 4px 0 8px;
+/* 底部固定聊天输入条（粉色描边 + 右上角小猫） */
+.chat-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 20px calc(env(safe-area-inset-bottom) + 12px);
 }
 
-.chat-row {
+.chat-bar .inner {
+  position: relative;
+  max-width: 480px;
+  margin: 0 auto;
   display: flex;
   gap: 10px;
-  margin-top: 8px;
 }
 
-.chat-row input {
+.chat-cat {
+  position: absolute;
+  right: 64px;
+  top: -26px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: color 0.2s;
+}
+
+.chat-cat.awake {
+  color: var(--accent-deep);
+}
+
+.chat-bar input {
   flex: 1;
+  border: 1.5px solid var(--accent);
   color: var(--text);
   border-radius: 999px;
   padding: 12px 20px;
   font-family: inherit;
   font-size: 16px; /* >=16px 防 iOS 聚焦自动放大 */
   outline: none;
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 4px 16px rgba(214, 128, 154, 0.22);
 }
 
-.chat-row input:focus {
-  border-color: var(--accent);
+.chat-bar input:focus {
+  border-color: var(--accent-deep);
 }
 
-.chat-row input::placeholder {
+.chat-bar input::placeholder {
   color: var(--faint);
 }
 
-.chat-row button {
+.chat-bar button {
   width: 48px;
   height: 48px;
   min-width: 48px;
   border: none;
   border-radius: 50%;
-  background: var(--text);
-  color: var(--bg-base);
+  background: linear-gradient(160deg, var(--accent) 0%, var(--accent-deep) 100%);
+  color: #fff;
   font-size: 18px;
   cursor: pointer;
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 4px 14px rgba(214, 128, 154, 0.4);
   transition: transform 0.12s;
 }
 
-.chat-row button:active {
+.chat-bar button:active {
   transform: scale(0.9);
 }
 
-.chat-row button:disabled {
+.chat-bar button:disabled {
   opacity: 0.4;
+}
+
+/* 确认弹窗（取消打卡等） */
+.modal-layer {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.22);
+  z-index: 60;
+  animation: fade-in 0.15s ease;
+}
+
+.modal-box {
+  width: min(320px, 84vw);
+  background: var(--card);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+.modal-text {
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 4px;
 }
 
 /* ---------- 横幅提示 ---------- */

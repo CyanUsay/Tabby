@@ -70,6 +70,25 @@ export function fetchFixedSymptoms() {
   return rest('symptom_catalog?is_fixed=eq.true&select=name&order=name');
 }
 
+// ---- 撤销/删除（0003 起 cycle_event 与 symptom_log 开放 anon delete）----
+export function deleteCycleEvent({ event, date }) {
+  return rest(`cycle_event?event=eq.${event}&date=eq.${date}`, { method: 'DELETE' });
+}
+
+export function deleteCycleEventsByDate(date) {
+  return rest(`cycle_event?date=eq.${date}`, { method: 'DELETE' });
+}
+
+export function deleteSymptom(date, symptom) {
+  return rest(`symptom_log?date=eq.${date}&symptom=eq.${encodeURIComponent(symptom)}`, {
+    method: 'DELETE',
+  });
+}
+
+export function deleteSymptomsByDate(date) {
+  return rest(`symptom_log?date=eq.${date}`, { method: 'DELETE' });
+}
+
 // 临时症状入字典 / 计数 +1（单用户场景，read-then-write 的竞态可忽略）
 export async function bumpSymptomCatalog(name) {
   const rows = await rest(`symptom_catalog?name=eq.${encodeURIComponent(name)}&select=name,count`);
