@@ -1,0 +1,44 @@
+# 合并到 main 后自动部署 Supabase 侧的所有改动：
+#   - supabase/migrations/ 里的新 SQL → 自动应用到数据库
+#   - supabase/functions/parse/ → 自动重新部署 Edge Function
+# （前端由 GitHub Pages 自动发布，无需此 workflow）
+#
+# 需要的 repo secrets（Settings → Secrets and variables → Actions）：
+#   SUPABASE_ACCESS_TOKEN   账号级访问令牌（dashboard 右上角头像 → Account → Access Tokens）
+#   SUPABASE_DB_PASSWORD    建项目时设置的数据库密码
+
+name: deploy
+
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/**']
+  workflow_dispatch: {}
+
+env:
+  PROJECT_REF: hsppianjfrwryhutplry
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link project
+        run: supabase link --project-ref "$PROJECT_REF"
+
+      - name: Mark manually-applied migrations as done (bootstrap, idempotent)
+        run: supabase migration repair --status applied 0001 || true
+
+      - name: Apply new migrations
+        run: supabase db push
+
+      - name: Deploy edge function
+        run: supabase functions deploy parse --no-verify-jwt --project-ref "$PROJECT_REF"

@@ -79,6 +79,18 @@ Safari 打开站点 → 分享按钮 → **添加到主屏幕**。之后从主�
 之后每周一凌晨 5 点（UTC+8）自动把四张表导出为 JSON 提交到 `backups/`。
 也可以在 Actions 页面手动点 Run workflow 立即验证一次。
 
+## 7. 自动部署（配好后再也不用手动跑 SQL / 贴函数代码）
+
+仓库 Settings → Secrets and variables → Actions，再加两个 secret：
+
+| 名称 | 值 | 在哪拿 |
+|---|---|---|
+| `SUPABASE_ACCESS_TOKEN` | `sbp_` 开头的令牌 | dashboard 右上角头像 → Account Settings → Access Tokens → Generate new token |
+| `SUPABASE_DB_PASSWORD` | 数据库密码 | 建项目时设置的那个；忘了去 Settings → Database 重置 |
+
+之后每次合并进 main：Pages 自动发前端，`deploy` workflow 自动应用新迁移 + 重部署 Edge Function。
+也可在 Actions 页对 `deploy` 手动 Run workflow。
+
 ## 日常维护
 
 - **改了任何前端文件**（html/css/js）→ 把 `sw.js` 顶部的 `tabby-shell-v1` 版本号 +1 再 push，
