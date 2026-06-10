@@ -197,9 +197,10 @@ header.topbar {
   color: var(--faint);
 }
 
+/* 今日标记改描边圆环：不和经期/PMS 荧光底打架，荧光能透出来 */
 .bw-day.today .num {
-  background: var(--text);
-  color: var(--bg-base);
+  border: 2px solid var(--text);
+  font-weight: 800;
 }
 
 /* 荧光笔涂抹（经期/PMS）：垫在数字后面，相邻同色连成一条 */
@@ -212,7 +213,7 @@ header.topbar {
 }
 
 .bw-day .hl.period {
-  background: color-mix(in srgb, #ff6f9c 62%, transparent);
+  background: color-mix(in srgb, #d6283b 45%, transparent);
 }
 
 .bw-day .hl.pms {
@@ -244,14 +245,15 @@ header.topbar {
   background: transparent;
 }
 
+/* 出血 = 睡醒时段的粉，果冻 = 睡前时段的蓝（与时段卡勾选色一致） */
 .bw-day .ul.bleed,
 .lg-ul.bleed {
-  background: #d8607f;
+  background: #e88aa0;
 }
 
 .bw-day .ul.jelly,
 .lg-ul.jelly {
-  background: var(--blue);
+  background: #7eb3e8;
 }
 
 .bw-day .ul.run-start {
@@ -288,7 +290,7 @@ header.topbar {
 }
 
 .lg-hl.period {
-  background: color-mix(in srgb, #ff6f9c 62%, transparent);
+  background: color-mix(in srgb, #d6283b 45%, transparent);
 }
 
 .lg-hl.pms {
@@ -336,7 +338,7 @@ header.topbar {
 }
 
 .done-btn:active {
-  transform: scale(0.97);
+  transform: none; /* 按压不缩放：避免整块视觉位移，反馈交给进度环 */
 }
 
 .done-ring {
@@ -351,12 +353,17 @@ header.topbar {
 .done-track,
 .done-arc {
   fill: none;
-  stroke-width: 7;
   stroke-linecap: round;
 }
 
+/* 渐变环比白色轨道略宽，转过去正好盖住轨道 */
 .done-track {
+  stroke-width: 9;
   stroke: rgba(255, 255, 255, 0.4);
+}
+
+.done-arc {
+  stroke-width: 10;
 }
 
 [data-theme='dark'] .done-track {
@@ -375,14 +382,14 @@ header.topbar {
   letter-spacing: 1px;
 }
 
-/* 完成后：小猫 logo 像盖章一样盖在按钮上 */
+/* 完成后：小猫 logo 盖章，大小与渐变环内圈对齐（r50-描边5 → 内径90） */
 .done-stamp {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 62px;
-  height: 62px;
-  margin: -31px 0 0 -31px;
+  width: 90px;
+  height: 90px;
+  margin: -45px 0 0 -45px;
   border-radius: 50%;
   transform: rotate(-12deg);
   opacity: 0;
@@ -423,14 +430,14 @@ header.topbar {
 .done-say {
   position: absolute;
   left: 50%;
-  top: -34px;
+  top: -44px;
   transform: translateX(-50%);
   white-space: nowrap;
   background: var(--card);
   border: 1px solid var(--glass-border);
   border-radius: 999px;
-  padding: 5px 14px;
-  font-size: 13px;
+  padding: 9px 20px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--accent-deep);
   box-shadow: var(--shadow);
@@ -1141,18 +1148,19 @@ header.topbar {
 /* 分割线：以下是聊天记录；小猫坐在线的右上角，激活才变粉 */
 .chat-divider {
   position: relative;
-  height: 1px;
-  background: var(--line);
-  margin: 30px 2px 12px;
+  height: 2.5px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--text) 22%, transparent);
+  margin: 34px 2px 14px;
 }
 
 .chat-cat {
   position: absolute;
   right: 6px;
-  bottom: 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--faint);
+  bottom: 1px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--muted);
   cursor: pointer;
   -webkit-user-select: none;
   user-select: none;
@@ -1208,36 +1216,34 @@ header.topbar {
   opacity: 0.4;
 }
 
-/* 确认弹窗（取消打卡等）：粉色半透明遮罩 + 实底卡片 */
+/* 确认弹窗（取消打卡等）：普通暗遮罩 + 粉色半透明磨砂卡片 */
 .modal-layer {
   position: fixed;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, #e8a3b8 42%, transparent);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.22);
   z-index: 60;
   animation: fade-in 0.15s ease;
 }
 
-[data-theme='dark'] .modal-layer {
-  background: color-mix(in srgb, #b16a85 36%, transparent);
-}
-
 .modal-box {
   width: min(320px, 84vw);
-  background: #fdf3f6;
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: color-mix(in srgb, #f3b9ca 78%, transparent);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.7);
   border-radius: 20px;
   box-shadow: var(--shadow);
   padding: 18px;
+  color: #5c3140;
 }
 
 [data-theme='dark'] .modal-box {
-  background: #34262d;
-  border-color: rgba(255, 255, 255, 0.12);
+  background: color-mix(in srgb, #8a4f64 68%, transparent);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #fbeef3;
 }
 
 .modal-text {
