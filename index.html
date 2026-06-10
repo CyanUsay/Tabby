@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tabby</title>
+
+  <!-- iOS PWA：iOS 不读 manifest 的 icons，必须给 apple-touch-icon（不透明底 180px） -->
+  <link rel="apple-touch-icon" href="./icons/icon-180.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Tabby" />
+  <meta name="theme-color" content="#e3e8ee" />
+
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/icon-192.png" />
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="app-title">Tabby <span class="paw">ᐢ..ᐢ</span></div>
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">☀️</button>
+  </header>
+
+  <div id="install-hint" class="banner hidden">
+    用 Safari 打开 → 分享 → 添加到主屏幕，就能像 app 一样全屏使用
+  </div>
+  <div id="offline-banner" class="banner hidden">
+    连不上数据库，当前为只读模式（清单仍可查看，勾选不会保存）
+  </div>
+
+  <main>
+    <div id="week-strip" class="week-strip"></div>
+    <div class="mode-row"><span id="mode-badge" class="mode-badge daily">日常</span></div>
+
+    <section class="card">
+      <h2>今日补剂</h2>
+      <div id="checklist"></div>
+    </section>
+
+    <section class="card">
+      <h2>今日症状</h2>
+      <div id="symptom-chips" class="chips"></div>
+      <div id="severity-picker"></div>
+      <div class="custom-symptom">
+        <input id="custom-symptom-input" type="text" placeholder="其他症状…" enterkeyhint="done" />
+        <button id="custom-symptom-add">记录</button>
+      </div>
+    </section>
+
+    <section id="chat-log" class="chat-log"></section>
+  </main>
+
+  <div class="chat-bar">
+    <div class="inner">
+      <input id="chat-input" type="text" placeholder="跟 Tabby 说一句… 比如“今天都吃了”" enterkeyhint="send" />
+      <button id="chat-send" aria-label="发送">↑</button>
+    </div>
+  </div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

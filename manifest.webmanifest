@@ -1,0 +1,15 @@
+{
+  "name": "Tabby · 补剂追踪",
+  "short_name": "Tabby",
+  "description": "自然语言驱动的补剂 / 经期 / 症状追踪器",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#e3e8ee",
+  "theme_color": "#e3e8ee",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

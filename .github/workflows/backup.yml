@@ -1,0 +1,53 @@
+# 每周自动把 Supabase 四张表备份成 JSON 提交进仓库 backups/ 目录。
+# 需要在仓库 Settings → Secrets and variables → Actions 配置：
+#   SUPABASE_URL       https://<project-ref>.supabase.co
+#   SUPABASE_ANON_KEY  anon public key
+# 附带好处：每周一次 API 访问，避免 Supabase 免费项目因 7 天无活动被暂停。
+
+name: backup
+
+on:
+  schedule:
+    - cron: '0 21 * * 0' # 每周一凌晨 5 点（UTC+8）
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dump tables
+        env:
+          URL: ${{ secrets.SUPABASE_URL }}
+          KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p backups
+          declare -A ORDER=(
+            [intake_log]='date,supplement,slot'
+            [symptom_log]='date,symptom'
+            [cycle_event]='date,event'
+            [symptom_catalog]='name'
+          )
+          for table in intake_log symptom_log cycle_event symptom_catalog; do
+            curl -fsS "$URL/rest/v1/$table?select=*&order=${ORDER[$table]}" \
+              -H "apikey: $KEY" -H "Authorization: Bearer $KEY" \
+              | jq 'map(del(.id))' > "backups/$table.json"
+            echo "$table: $(jq length "backups/$table.json") rows"
+          done
+
+      - name: Commit if changed
+        run: |
+          git config user.name 'tabby-backup'
+          git config user.email 'actions@github.com'
+          git add backups/
+          if git diff --cached --quiet; then
+            echo 'No changes, skipping commit.'
+          else
+            git commit -m "backup: $(date -u +%F) [skip ci]"
+            git push
+          fi
