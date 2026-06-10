@@ -167,7 +167,8 @@ function renderStats() {
   const allDone = total > 0 && taken === total;
   $('done-btn').classList.toggle('done', allDone); // done 态显示盖章的小猫
   $('done-label').textContent = '长按打卡';
-  $('done-sub').textContent = allDone ? `今日完成 ${taken}/${total} ✓` : `一键记录今天正常完成（${taken}/${total}）`;
+  // 文案保持等长短句：左栏宽度恒定，状态切换不再挤动右侧统计列
+  $('done-sub').textContent = allDone ? `今日 ${taken}/${total} ✓` : `今日 ${taken}/${total}`;
 }
 
 function renderSymptomsCount() {
