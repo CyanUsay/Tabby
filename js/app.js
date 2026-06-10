@@ -127,18 +127,17 @@ function renderCalendar() {
     num.textContent = String(Number(d.slice(8)));
     cell.appendChild(num);
 
-    // 下划线（出血/果冻观察）
+    // 下划线（出血/果冻观察）：默认同一水平面，同一天两者都有才分上下
     const uls = document.createElement('span');
     uls.className = 'uls';
-    for (const [set, cls] of [[bleedDates, 'bleed'], [jellyDates, 'jelly']]) {
+    const dayMarks = [
+      ...(bleedDates.has(d) ? [['bleed', bleedDates]] : []),
+      ...(jellyDates.has(d) ? [['jelly', jellyDates]] : []),
+    ];
+    for (const [cls, set] of dayMarks) {
       const ul = document.createElement('i');
-      ul.className = 'ul';
-      if (set.has(d)) {
-        const e = runEdges(i, d, (x) => set.has(x));
-        ul.classList.add(cls);
-        if (e.start) ul.classList.add('run-start');
-        if (e.end) ul.classList.add('run-end');
-      }
+      const e = runEdges(i, d, (x) => set.has(x));
+      ul.className = `ul ${cls}${e.start ? ' run-start' : ''}${e.end ? ' run-end' : ''}`;
       uls.appendChild(ul);
     }
     cell.appendChild(uls);
@@ -166,9 +165,9 @@ function renderStats() {
   const total = state.checklist.length;
   const taken = state.checklist.filter((i) => state.intakeMap.get(intakeKey(i))?.taken).length;
   const allDone = total > 0 && taken === total;
-  $('done-btn').classList.toggle('done', allDone);
-  $('done-label').textContent = allDone ? '完成喵 ✓' : '长按打卡';
-  $('done-sub').textContent = allDone ? `今日 ${taken}/${total}` : `一键记录今天正常完成（${taken}/${total}）`;
+  $('done-btn').classList.toggle('done', allDone); // done 态显示盖章的小猫
+  $('done-label').textContent = '长按打卡';
+  $('done-sub').textContent = allDone ? `今日完成 ${taken}/${total} ✓` : `一键记录今天正常完成（${taken}/${total}）`;
 }
 
 function renderSymptomsCount() {
@@ -318,10 +317,15 @@ async function onToggleSlot(items, nextTaken) {
 
 async function onLogSymptom(symptom, severity, isCustom) {
   if (state.degraded) return;
-  await db.upsertSymptoms([
-    { date: state.today, symptom, severity, is_custom: isCustom },
-  ]);
-  if (isCustom && severity > 0) await db.bumpSymptomCatalog(symptom).catch(() => {});
+  if (severity === 0) {
+    // "清除" = 真删除这条记录
+    await db.deleteSymptom(state.today, symptom);
+  } else {
+    await db.upsertSymptoms([
+      { date: state.today, symptom, severity, is_custom: isCustom },
+    ]);
+    if (isCustom) await db.bumpSymptomCatalog(symptom).catch(() => {});
+  }
   state.todaySymptoms = await db.fetchTodaySymptoms(state.today);
   renderAll();
   maybePromptPms();
@@ -371,19 +375,17 @@ async function markAllDone() {
   await persistIntake(rows, prev);
 }
 
+// 完成反馈：小猫 logo 像盖章一样砸在按钮上 + 气泡"太棒了喵" + 震动
+// （iOS Safari 不支持网页震动 API，iPhone 上以盖章顿挫动画作为反馈）
 function celebrate() {
-  const layer = document.createElement('div');
-  layer.className = 'celebrate';
-  const cat = document.createElement('img');
-  cat.src = './icons/icon-192.png';
-  cat.alt = '';
-  const say = document.createElement('div');
-  say.className = 'say';
-  say.textContent = '太棒了喵！ฅ^•ﻌ•^ฅ';
-  layer.append(cat, say);
-  layer.addEventListener('click', () => layer.remove());
-  document.body.appendChild(layer);
-  setTimeout(() => layer.remove(), 2000);
+  navigator.vibrate?.(80);
+  const btn = $('done-btn');
+  btn.classList.remove('stamp-in');
+  void btn.offsetWidth; // 重置动画
+  btn.classList.add('stamp-in');
+  const say = $('done-say');
+  say.hidden = false;
+  setTimeout(() => (say.hidden = true), 2000);
 }
 
 /* ---------- 聊天框小猫：睡着 ⇄ 坐起摇尾巴 ---------- */
