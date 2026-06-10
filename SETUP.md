@@ -10,7 +10,7 @@
    - `supabase/seed.sql`（症状字典）
 3. 进 **Settings → API**，记下两个值：
    - Project URL（形如 `https://abcdefgh.supabase.co`）
-   - anon public key（一长串 JWT，设计上可公开）
+   - publishable key（`sb_publishable_` 开头；老项目则是 anon key。设计上可公开）
 
 ## 2. DeepSeek（AI）
 
@@ -25,14 +25,15 @@ DeepSeek key 绝不能放前端。在本机装好 [Supabase CLI](https://supabas
 supabase login
 supabase link --project-ref <你的项目ref>     # ref 是 Project URL 里的子域名
 supabase secrets set DEEPSEEK_API_KEY=sk-xxx
-supabase functions deploy parse
+supabase functions deploy parse --no-verify-jwt
 ```
 
-冒烟测试（替换两处占位符）：
+> `--no-verify-jwt` 是必须的：新版 `sb_publishable_` key 不是 JWT，过不了默认校验。
+
+冒烟测试（替换项目 ref）：
 
 ```bash
 curl -s 'https://<项目ref>.supabase.co/functions/v1/parse' \
-  -H 'Authorization: Bearer <anon key>' \
   -H 'Content-Type: application/json' \
   -d '{
     "userText": "今天都吃了，漏了VC，有点胸胀",
@@ -53,8 +54,8 @@ curl -s 'https://<项目ref>.supabase.co/functions/v1/parse' \
 
 ## 4. 前端配置 + GitHub Pages
 
-1. 编辑 `js/config.js`，填三个值：`SUPABASE_URL`、`SUPABASE_ANON_KEY`、`PARSE_FN_URL`
-   （函数地址 = `https://<项目ref>.supabase.co/functions/v1/parse`）。
+1. 编辑 `js/config.js`，填三个值：`SUPABASE_URL`、`SUPABASE_ANON_KEY`（publishable key）、
+   `PARSE_FN_URL`（= `https://<项目ref>.supabase.co/functions/v1/parse`）。✅ 已填好。
 2. 把代码合到 **main 分支**（Pages 从 main 部署，feature 分支不会生效）。
 3. 仓库 Settings → Pages → Source 选 **Deploy from a branch** → `main` / `/ (root)`。
 4. 等一两分钟，访问 `https://<你的用户名>.github.io/Tabby/` 验证：
@@ -73,7 +74,7 @@ Safari 打开站点 → 分享按钮 → **添加到主屏幕**。之后从主�
 | 名称 | 值 |
 |---|---|
 | `SUPABASE_URL` | Project URL |
-| `SUPABASE_ANON_KEY` | anon key |
+| `SUPABASE_ANON_KEY` | publishable key（`sb_publishable_` 开头） |
 
 之后每周一凌晨 5 点（UTC+8）自动把四张表导出为 JSON 提交到 `backups/`。
 也可以在 Actions 页面手动点 Run workflow 立即验证一次。

@@ -1,5 +1,6 @@
 // Supabase PostgREST 直连封装。不用 SDK：只需 select/insert/upsert，fetch 足够。
 // 注意：RLS 只开了 select/insert/update，没有 delete —— 纠错走 Supabase dashboard。
+// 新版 sb_publishable_ key 不是 JWT，只放 apikey 头（不放 Authorization，以 anon 角色访问）。
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
@@ -8,7 +9,6 @@ async function rest(path, { method = 'GET', body, headers = {} } = {}) {
     method,
     headers: {
       apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
       'Content-Type': 'application/json',
       ...headers,
     },

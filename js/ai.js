@@ -21,7 +21,7 @@ export async function parseUtterance(userText, context) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        apikey: SUPABASE_ANON_KEY,
       },
       body: JSON.stringify({ userText, context }),
       signal: controller.signal,

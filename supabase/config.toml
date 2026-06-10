@@ -1,0 +1,4 @@
+# 新版 sb_publishable_ key 不是 JWT，无法通过 Edge Function 的 JWT 校验，
+# 所以 parse 函数关闭 verify_jwt（该函数本就只做无状态翻译，不碰数据库）。
+[functions.parse]
+verify_jwt = false

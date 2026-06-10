@@ -35,7 +35,7 @@ jobs:
           )
           for table in intake_log symptom_log cycle_event symptom_catalog; do
             curl -fsS "$URL/rest/v1/$table?select=*&order=${ORDER[$table]}" \
-              -H "apikey: $KEY" -H "Authorization: Bearer $KEY" \
+              -H "apikey: $KEY" \
               | jq 'map(del(.id))' > "backups/$table.json"
             echo "$table: $(jq length "backups/$table.json") rows"
           done

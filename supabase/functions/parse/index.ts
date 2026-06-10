@@ -1,7 +1,7 @@
 // Tabby · DeepSeek 解析代理（Supabase Edge Function）
 // 全项目唯一安全关键点：DEEPSEEK_API_KEY 只存在于这里的 secret，绝不下发前端。
-// 部署：supabase secrets set DEEPSEEK_API_KEY=sk-xxx && supabase functions deploy parse
-// 保持默认 verify_jwt=true：前端必须带 anon key 作 Bearer，防止任意人裸调配额。
+// 部署：supabase secrets set DEEPSEEK_API_KEY=sk-xxx && supabase functions deploy parse --no-verify-jwt
+// verify_jwt 关闭（见 supabase/config.toml）：新版 sb_publishable_ key 不是 JWT，过不了校验。
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
