@@ -179,6 +179,7 @@ header.topbar {
   padding: 2px 0 4px;
 }
 
+/* 日期一律浅色，只有今日深色加粗（无圈） */
 .bw-day .num {
   position: relative;
   display: inline-flex;
@@ -186,20 +187,14 @@ header.topbar {
   justify-content: center;
   width: 25px;
   height: 25px;
-  border-radius: 50%;
   font-size: 12.5px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--text);
-}
-
-.bw-day.future .num {
   color: var(--faint);
 }
 
-/* 今日标记改描边圆环：不和经期/PMS 荧光底打架，荧光能透出来 */
 .bw-day.today .num {
-  border: 2px solid var(--text);
+  color: var(--text);
   font-weight: 800;
 }
 
@@ -213,11 +208,17 @@ header.topbar {
 }
 
 .bw-day .hl.period {
-  background: color-mix(in srgb, #d6283b 45%, transparent);
+  background: #d6283b;
 }
 
 .bw-day .hl.pms {
-  background: color-mix(in srgb, #9c7bff 55%, transparent);
+  background: #9c7bff;
+}
+
+/* 色带不透明：垫在数字下面，数字翻白保证可读 */
+.bw-day .hl ~ .num,
+.bw-day.today .hl ~ .num {
+  color: #fff;
 }
 
 .bw-day .hl.run-start {
@@ -290,11 +291,11 @@ header.topbar {
 }
 
 .lg-hl.period {
-  background: color-mix(in srgb, #d6283b 45%, transparent);
+  background: #d6283b;
 }
 
 .lg-hl.pms {
-  background: color-mix(in srgb, #9c7bff 55%, transparent);
+  background: #9c7bff;
 }
 
 .lg-ul {
@@ -373,7 +374,7 @@ header.topbar {
 }
 
 .done-btn.done .done-track {
-  stroke: color-mix(in srgb, var(--accent) 55%, transparent);
+  stroke: #e88aa0; /* 完成态圆环 = 睡醒时段的粉 */
 }
 
 .done-label {
@@ -384,14 +385,14 @@ header.topbar {
   letter-spacing: 1px;
 }
 
-/* 完成后：小猫 logo 盖章，大小与渐变环内圈对齐（r50-描边5 → 内径90） */
+/* 完成后：小猫 logo 盖章 */
 .done-stamp {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 90px;
-  height: 90px;
-  margin: -45px 0 0 -45px;
+  width: 74px;
+  height: 74px;
+  margin: -37px 0 0 -37px;
   border-radius: 50%;
   transform: rotate(-12deg);
   opacity: 0;
@@ -1157,6 +1158,12 @@ header.topbar {
   border-radius: 3px;
   background: color-mix(in srgb, var(--text) 22%, transparent);
   margin: 34px 2px 14px;
+  transition: background 0.25s;
+}
+
+/* 输入框聚焦时：分割线和小猫一起变粉激活 */
+.chat-divider.awake {
+  background: #e88aa0;
 }
 
 .chat-cat {
@@ -1166,10 +1173,9 @@ header.topbar {
   font-size: 16px;
   font-weight: 700;
   color: var(--muted);
-  cursor: pointer;
   -webkit-user-select: none;
   user-select: none;
-  transition: color 0.2s;
+  transition: color 0.25s;
 }
 
 .chat-cat.awake {

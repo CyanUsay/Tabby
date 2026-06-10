@@ -405,9 +405,10 @@ function celebrate() {
   setTimeout(() => (say.hidden = true), 2000);
 }
 
-/* ---------- 聊天框小猫：睡着 ⇄ 坐起摇尾巴 ---------- */
+/* ---------- 分割线小猫：跟随输入框激活（聚焦=醒+变粉，离开=睡） ---------- */
 function initChatCat() {
   const cat = $('chat-cat');
+  const divider = document.querySelector('.chat-divider');
   const SLEEP = '(=˘ω˘=) zzZ';
   const FRAMES = ['(=^･ω･^=)∫', '(=^･ω･^=)ʃ'];
   let wag = null;
@@ -418,17 +419,18 @@ function initChatCat() {
     wag = null;
     cat.textContent = SLEEP;
     cat.classList.remove('awake');
+    divider.classList.remove('awake');
   };
   const wake = () => {
     if (wag) return;
     cat.classList.add('awake');
+    divider.classList.add('awake');
     cat.textContent = FRAMES[0];
     wag = setInterval(() => {
       frame = 1 - frame;
       cat.textContent = FRAMES[frame];
     }, 450);
   };
-  cat.addEventListener('click', () => (wag ? sleep() : wake()));
   return (awake) => (awake ? wake() : setTimeout(sleep, 2500));
 }
 
