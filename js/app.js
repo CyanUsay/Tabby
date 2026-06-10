@@ -2,7 +2,7 @@
 // Supabase 拉取失败时降级为只读（本地清单仍可见）。
 
 import { cycleConfig } from './config.js';
-import { appToday, diffDays } from './dates.js';
+import { appToday } from './dates.js';
 import { getChecklist } from './protocol.js';
 import { deriveMode } from './cycle.js';
 import * as realDb from './db.js';
@@ -93,15 +93,12 @@ function renderProgress() {
   $('ring-pct').textContent = `${Math.round(frac * 100)}%`;
   $('ring-sub').textContent = `${taken}/${total} 已完成`;
 
-  const { mode, dayN, nextPeriodDate } = state.modeInfo;
+  const { mode, dayN, daysSinceEnd, ovulating } = state.modeInfo;
   $('stat-mode').textContent =
     mode === 'period' ? `经期 Day ${dayN}` : mode === 'pms' ? 'PMS 期' : '日常';
-  $('stat-next').textContent =
-    mode === 'period' || !nextPeriodDate
-      ? '—'
-      : `${diffDays(state.today, nextPeriodDate)} 天后`;
+  $('stat-since').textContent = daysSinceEnd === null ? '—' : `${daysSinceEnd} 天`;
+  $('stat-ovulation').textContent = ovulating ? '可能进行中' : '—';
   $('stat-symptoms').textContent = `${state.todaySymptoms.filter((s) => s.severity > 0).length} 项`;
-  $('stat-count').textContent = `${total} 种`;
 }
 
 function renderList() {

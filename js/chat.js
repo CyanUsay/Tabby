@@ -117,12 +117,19 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit })
       }
 
       if (draft.cycle) {
-        card.appendChild(sectionTitle('经期'));
+        card.appendChild(sectionTitle('周期'));
         const row = document.createElement('button');
         row.className = 'preview-row';
         row.innerHTML = `<span class="mark">☾</span><span class="pname"></span><span class="remove">✕</span>`;
+        const EVENT_LABELS = {
+          period_start: '经期开始',
+          period_end: '经期结束',
+          pms_start: '进入 PMS',
+          spotting: '突破性出血',
+          ovulation_sign: '排卵信号',
+        };
         row.querySelector('.pname').textContent =
-          (draft.cycle.event === 'period_start' ? '经期开始' : '经期结束') + ` · ${draft.cycle.date}`;
+          `${EVENT_LABELS[draft.cycle.event]} · ${draft.cycle.date}`;
         row.addEventListener('click', (e) => {
           if (e.target.classList.contains('remove')) {
             draft.cycle = null;

@@ -14,7 +14,7 @@ function test(name, fn) {
   console.log(`  ok - ${name}`);
 }
 
-const cfg = { cycleLength: 28, pmsWindow: 7, periodLength: 5 };
+const cfg = { periodLength: 5, pmsMaxDays: 14 };
 
 console.log('dates.js');
 test('凌晨 2 点算前一天', () => {
@@ -76,7 +76,8 @@ test('无事件 → daily', () => {
   assert.deepEqual(deriveMode([], '2026-06-10', cfg), {
     mode: 'daily',
     dayN: null,
-    nextPeriodDate: null,
+    daysSinceEnd: null,
+    ovulating: false,
   });
 });
 test('经期窗口内（无显式 end，默认长度兜底）→ period Day N', () => {
@@ -84,30 +85,52 @@ test('经期窗口内（无显式 end，默认长度兜底）→ period Day N', 
   const r = deriveMode(events, '2026-06-10', cfg);
   assert.equal(r.mode, 'period');
   assert.equal(r.dayN, 3);
+  assert.equal(r.daysSinceEnd, null);
 });
-test('默认长度兜底：第 6 天不再是 period', () => {
+test('默认长度兜底：第 6 天回 daily，经期结束后 1 天', () => {
   const events = [{ event: 'period_start', date: '2026-06-05' }];
-  assert.equal(deriveMode(events, '2026-06-10', cfg).mode, 'daily');
+  // 隐含结束日 = 06-09
+  const r = deriveMode(events, '2026-06-10', cfg);
+  assert.equal(r.mode, 'daily');
+  assert.equal(r.daysSinceEnd, 1);
 });
-test('显式 end 延长经期窗口', () => {
+test('显式 end 延长经期窗口 + daysSinceEnd 从显式 end 起算', () => {
   const events = [
     { event: 'period_start', date: '2026-06-03' },
     { event: 'period_end', date: '2026-06-09' },
   ];
   assert.equal(deriveMode(events, '2026-06-09', cfg).mode, 'period');
+  const r = deriveMode(events, '2026-06-12', cfg);
+  assert.equal(r.mode, 'daily');
+  assert.equal(r.daysSinceEnd, 3);
+});
+test('pms_start 报告后进入 PMS，经期开始后终结', () => {
+  const events = [{ event: 'pms_start', date: '2026-06-01' }];
+  assert.equal(deriveMode(events, '2026-06-05', cfg).mode, 'pms');
+  events.push({ event: 'period_start', date: '2026-06-08' });
+  assert.equal(deriveMode(events, '2026-06-08', cfg).mode, 'period');
+  // 经期结束后不再回到 PMS（pms_start 已被这次经期终结）
+  assert.equal(deriveMode(events, '2026-06-14', cfg).mode, 'daily');
+});
+test('PMS 超过 pmsMaxDays 自动回 daily（忘记报经期的兜底）', () => {
+  const events = [{ event: 'pms_start', date: '2026-05-20' }];
+  assert.equal(deriveMode(events, '2026-06-02', cfg).mode, 'pms'); // 第 13 天
+  assert.equal(deriveMode(events, '2026-06-03', cfg).mode, 'daily'); // 第 14 天
+});
+test('spotting 不影响 mode', () => {
+  const events = [{ event: 'spotting', date: '2026-06-09' }];
   assert.equal(deriveMode(events, '2026-06-10', cfg).mode, 'daily');
 });
-test('PMS 窗口：下次经期前 7 天', () => {
-  const events = [{ event: 'period_start', date: '2026-05-20' }];
-  // 下次 = 06-17，窗口 [06-10, 06-16]
-  assert.equal(deriveMode(events, '2026-06-09', cfg).mode, 'daily');
-  assert.equal(deriveMode(events, '2026-06-10', cfg).mode, 'pms');
-  assert.equal(deriveMode(events, '2026-06-16', cfg).mode, 'pms');
-  // 预测经期日当天若没有真实 period_start 事件，按 spec §4 回落 daily（边界靠用户报告校正）
-  assert.equal(deriveMode(events, '2026-06-17', cfg).mode, 'daily');
+test('排卵信号 3 天内 ovulating=true，之后 false', () => {
+  const events = [{ event: 'ovulation_sign', date: '2026-06-08' }];
+  assert.equal(deriveMode(events, '2026-06-10', cfg).ovulating, true);
+  assert.equal(deriveMode(events, '2026-06-11', cfg).ovulating, false);
 });
-test('未来日期的 start 不影响今天', () => {
-  const events = [{ event: 'period_start', date: '2026-06-20' }];
+test('未来日期的事件不影响今天', () => {
+  const events = [
+    { event: 'period_start', date: '2026-06-20' },
+    { event: 'pms_start', date: '2026-06-15' },
+  ];
   assert.equal(deriveMode(events, '2026-06-10', cfg).mode, 'daily');
 });
 test('backfillStart：经期第 3 天 → start = 今天-2', () => {

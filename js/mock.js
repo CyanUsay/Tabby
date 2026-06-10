@@ -61,6 +61,15 @@ export function mockParse(text, context) {
       if (text.includes('结束') || text.includes('走了')) {
         result.cycle = { event: 'period_end', date: context.date };
       }
+      if (text.toLowerCase().includes('pms')) {
+        result.cycle = { event: 'pms_start', date: context.date };
+      }
+      if (text.includes('有点血') || text.includes('见红')) {
+        result.cycle = { event: 'spotting', date: context.date };
+      }
+      if (text.includes('果冻') || text.includes('蛋清') || text.includes('拉丝')) {
+        result.cycle = { event: 'ovulation_sign', date: context.date };
+      }
       resolve(result);
     }, 600);
   });

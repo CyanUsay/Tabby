@@ -65,10 +65,12 @@ export function sanitizeSymptoms(symptoms, fixedSymptoms) {
     }));
 }
 
+export const CYCLE_EVENTS = ['period_start', 'period_end', 'pms_start', 'spotting', 'ovulation_sign'];
+
 // 规整 cycle：只接受合法事件名 + YYYY-MM-DD
 export function sanitizeCycle(cycle) {
   if (!cycle || typeof cycle !== 'object') return null;
-  if (!['period_start', 'period_end'].includes(cycle.event)) return null;
+  if (!CYCLE_EVENTS.includes(cycle.event)) return null;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(cycle.date || '')) return null;
   return { event: cycle.event, date: cycle.date };
 }

@@ -32,7 +32,7 @@ ${JSON.stringify(ctx.checklist, null, 0)}
 {
   "intake": [ {"supplement":"VC","slot":"lunch","taken":true}, ... ],
   "symptoms": [ {"symptom":"胸胀","severity":2,"is_custom":false}, ... ],
-  "cycle": null 或 {"event":"period_start","date":"YYYY-MM-DD"},
+  "cycle": null 或 {"event":"...","date":"YYYY-MM-DD"},
   "clarify": null 或 "需要向用户澄清的问题"
 }
 
@@ -44,10 +44,14 @@ ${JSON.stringify(ctx.checklist, null, 0)}
 - 只提到症状不影响 intake；只提到 intake 不动 symptoms
 - 症状不在固定标签里 → is_custom=true
 - 程度词（"有点"→1，默认→2，"很/特别严重"→3）；无法判断填 2
-- 识别到经期边界表达填 cycle，否则 null：
-  · "来例假了/来了" → {"event":"period_start","date":"${ctx.date}"}
-  · "结束了/走了" → {"event":"period_end","date":"${ctx.date}"}
+- 识别到周期事件表达填 cycle（event 只能取下列五种），否则 null：
+  · "来例假了/月经来了/来了" → {"event":"period_start","date":"${ctx.date}"}
+  · "（经期）结束了/走了" → {"event":"period_end","date":"${ctx.date}"}
   · "经期第N天" → period_start，date = ${ctx.date} 往前数 N-1 天（你来计算具体日期）
+  · "PMS开始了/进入PMS了/经前期来了" → {"event":"pms_start","date":"${ctx.date}"}（注意：这不是经期开始！）
+  · "有点血/见红/少量出血/突破性出血"（描述非经期的少量出血）→ {"event":"spotting","date":"${ctx.date}"}
+  · "果冻状分泌物/蛋清状分泌物/拉丝白带" → {"event":"ovulation_sign","date":"${ctx.date}"}
+- 区分要点：明确说"例假/月经/大姨妈来了"才是 period_start；只说"有点血"是 spotting；说"PMS"是 pms_start
 - 信息矛盾或无法确定时，intake/symptoms 留空，在 clarify 里写要问的话`;
 }
 
