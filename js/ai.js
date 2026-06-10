@@ -53,14 +53,14 @@ export function filterIntakeToChecklist(intake, checklist) {
   return out;
 }
 
-// 规整 symptoms：缺 severity 给 2，限定 0-3
+// 规整 symptoms：缺 severity 给 2，限定 1-3（"无"不再是选项，没记录就是无）
 export function sanitizeSymptoms(symptoms, fixedSymptoms) {
   if (!Array.isArray(symptoms)) return [];
   return symptoms
     .filter((s) => s && typeof s.symptom === 'string' && s.symptom.trim())
     .map((s) => ({
       symptom: s.symptom.trim(),
-      severity: Number.isInteger(s.severity) && s.severity >= 0 && s.severity <= 3 ? s.severity : 2,
+      severity: Number.isInteger(s.severity) && s.severity >= 1 && s.severity <= 3 ? s.severity : 2,
       is_custom: !fixedSymptoms.includes(s.symptom.trim()),
     }));
 }

@@ -20,7 +20,7 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit })
     sendBtn.disabled = true;
     input.value = '';
     addBubble(logEl, 'user', text);
-    const thinking = addBubble(logEl, 'tabby thinking', 'Tabby 在想…');
+    const thinking = addBubble(logEl, 'tabby thinking', 'Tabby 想想喵');
 
     const context = getContext();
     let result;
@@ -30,8 +30,8 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit })
       thinking.remove();
       const msg =
         e instanceof AiError && e.kind === 'timeout'
-          ? 'AI 响应超时了，可以直接在上面手动勾选～'
-          : 'AI 暂时不可用，可以直接在上面手动勾选～';
+          ? '呜…等不到 AI 回话了喵，主人先在下面手动勾选吧 (=；ω；=)'
+          : '呜…AI 暂时联系不上喵，主人先在下面手动勾选吧 (=；ω；=)';
       addBubble(logEl, 'tabby', msg);
       done();
       return;
@@ -51,7 +51,7 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit })
       cycle: sanitizeCycle(result.cycle),
     };
     if (!draft.intake.length && !draft.symptoms.length && !draft.cycle) {
-      addBubble(logEl, 'tabby', '没听出来要记什么…再说具体一点？');
+      addBubble(logEl, 'tabby', '没听懂主人想记什么喵…再说具体一点好不好 ฅ(•ㅅ•)ฅ');
       done();
       return;
     }
@@ -156,11 +156,11 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit })
           // onCommit 可返回一句"推算结果"反馈（如"经期从 6/8 起算，今天 Day 3"）
           const msg = await onCommit(draft);
           card.remove();
-          addBubble(logEl, 'tabby', msg || '记好啦 ✓');
+          addBubble(logEl, 'tabby', msg || '记好啦喵 ✓ ฅ^•ﻌ•^ฅ');
         } catch (e) {
           confirm.disabled = false;
           confirm.textContent = '确认记录';
-          addBubble(logEl, 'tabby', '写入失败了，稍后再试或手动勾选');
+          addBubble(logEl, 'tabby', '呜呜写入失败了喵…主人稍后再试或手动勾选 (´；ω；`)');
           console.error(e);
         }
         scrollToBottom();
@@ -178,7 +178,7 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit })
   }
 
   function scrollToBottom() {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    logEl.scrollTop = logEl.scrollHeight; // 聊天区在页面中部，滚自己不滚页面
   }
 
   sendBtn.addEventListener('click', send);
@@ -192,6 +192,6 @@ function addBubble(logEl, cls, text) {
   el.className = `bubble ${cls}`;
   el.textContent = text;
   logEl.appendChild(el);
-  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  logEl.scrollTop = logEl.scrollHeight;
   return el;
 }

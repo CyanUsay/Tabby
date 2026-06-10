@@ -6,7 +6,14 @@ import { getChecklist } from './protocol.js';
 export function makeMockDb() {
   const intake = new Map(); // key: date|supplement|slot
   const symptoms = new Map(); // key: date|symptom
-  const cycleEvents = [{ event: 'period_start', date: '2026-05-20' }];
+  // 演示用历史：让双周日历能看到状态条和标记点
+  const cycleEvents = [
+    { event: 'period_start', date: '2026-05-20' },
+    { event: 'bleed_light', date: '2026-06-02' },
+    { event: 'jelly', date: '2026-06-05' },
+    { event: 'jelly', date: '2026-06-06' },
+    { event: 'jelly', date: '2026-06-07' },
+  ];
   const catalog = ['胸胀', '噩梦', '情绪低落', '精力', '头痛', '腹痛', '发热感'];
 
   return {
@@ -38,7 +45,7 @@ export function mockParse(text, context) {
     setTimeout(() => {
       if (text.includes('崩溃')) return reject(new Error('mock failure'));
       if (text.includes('不知道')) {
-        return resolve({ intake: [], symptoms: [], cycle: null, clarify: '你是想记补剂还是症状呀？' });
+        return resolve({ intake: [], symptoms: [], cycle: null, clarify: '主人是想记补剂还是症状呀喵？ฅ(•ㅅ•)ฅ' });
       }
       const checklist = context.checklist || getChecklist(context.mode);
       const result = { intake: [], symptoms: [], cycle: null, clarify: null };

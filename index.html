@@ -18,41 +18,38 @@
   <link rel="stylesheet" href="./css/style.css" />
 </head>
 <body>
+  <header class="topbar">
+    <div class="app-title">TABBY</div>
+    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">☀️</button>
+  </header>
+
   <div id="install-hint" class="banner hidden">
-    用 Safari 打开 → 分享 → 添加到主屏幕，就能像 app 一样全屏使用
+    用 Safari 打开 → 分享 → 添加到主屏幕，就能像 app 一样全屏使用喵
   </div>
   <div id="offline-banner" class="banner hidden">
-    连不上数据库，当前为只读模式（清单仍可查看，勾选不会保存）
+    呜…连不上数据库喵，当前为只读模式（清单仍可查看，勾选不会保存）
   </div>
 
   <main>
-    <section class="hero">
-      <div class="hero-row">
-        <div>
-          <div id="greeting" class="greeting">你好</div>
-          <div id="date-line" class="date-line"></div>
-        </div>
-        <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">☀️</button>
+    <!-- 双周日历：上周 + 这周，状态条与观察标记 -->
+    <section class="card cal-card">
+      <div id="biweek" class="biweek"></div>
+      <div class="cal-legend">
+        <span class="lg"><i class="lg-bar period"></i>经期</span>
+        <span class="lg"><i class="lg-bar pms"></i>PMS</span>
+        <span class="lg"><i class="lg-dot bleed"></i>出血</span>
+        <span class="lg"><i class="lg-dot jelly"></i>果冻</span>
       </div>
     </section>
 
-    <h2 class="section-heading">今日进度</h2>
-    <section class="card progress-card">
-      <div class="ring-wrap">
-        <svg viewBox="0 0 120 120" class="ring">
-          <defs>
-            <linearGradient id="ringGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#e88aa0" />
-              <stop offset="100%" stop-color="#7eb3e8" />
-            </linearGradient>
-          </defs>
-          <circle class="ring-bg" cx="60" cy="60" r="52" />
-          <circle id="ring-fill" class="ring-fill" cx="60" cy="60" r="52" stroke="url(#ringGrad)" />
-        </svg>
-        <div class="ring-center">
-          <div id="ring-pct" class="ring-pct">0%</div>
-          <div id="ring-sub" class="ring-sub">0/0 已完成</div>
-        </div>
+    <!-- 打卡 + 统计 -->
+    <section class="card checkin-card">
+      <div class="done-wrap">
+        <button id="done-btn" class="done-btn">
+          <span class="done-fill"></span>
+          <span id="done-label" class="done-label">长按打卡</span>
+        </button>
+        <div class="done-sub" id="done-sub">今天正常完成</div>
       </div>
       <div class="stats">
         <div class="stat">
@@ -78,28 +75,35 @@
       </div>
     </section>
 
-    <h2 class="section-heading">今日安排</h2>
-    <div id="checklist" class="timeline"></div>
-
-    <h2 class="section-heading">今日症状</h2>
-    <section class="card">
-      <div id="symptom-chips" class="chips"></div>
-      <div id="severity-picker"></div>
-      <div class="custom-symptom">
-        <input id="custom-symptom-input" type="text" placeholder="其他症状…" enterkeyhint="done" />
-        <button id="custom-symptom-add">记录</button>
+    <!-- 聊天区（页面中部） -->
+    <section class="chat-inline">
+      <div id="chat-log" class="chat-log"></div>
+      <div class="chat-row">
+        <input id="chat-input" type="text" placeholder="跟 Tabby 说点什么喵…" enterkeyhint="send" />
+        <button id="chat-send" aria-label="发送">↑</button>
       </div>
     </section>
 
-    <section id="chat-log" class="chat-log"></section>
-  </main>
+    <h2 class="section-heading">今日安排</h2>
+    <div id="checklist" class="timeline"></div>
 
-  <div class="chat-bar">
-    <div class="inner">
-      <input id="chat-input" type="text" placeholder="跟 Tabby 说一句… 比如“今天都吃了”" enterkeyhint="send" />
-      <button id="chat-send" aria-label="发送">↑</button>
-    </div>
-  </div>
+    <!-- 今日症状（默认收起） -->
+    <section class="card symptoms-card">
+      <button id="symptoms-toggle" class="symptoms-head">
+        <span class="symptoms-title">今日症状</span>
+        <span id="symptoms-count" class="sym-count"></span>
+        <span id="symptoms-chev" class="chev">▾</span>
+      </button>
+      <div id="symptoms-body" class="symptoms-body" hidden>
+        <div id="symptom-chips" class="chips"></div>
+        <div id="severity-picker"></div>
+        <div class="custom-symptom">
+          <input id="custom-symptom-input" type="text" placeholder="其他症状…" enterkeyhint="done" />
+          <button id="custom-symptom-add">记录</button>
+        </div>
+      </div>
+    </section>
+  </main>
 
   <script type="module" src="./js/app.js"></script>
 </body>

@@ -43,7 +43,7 @@ ${JSON.stringify(ctx.checklist, null, 0)}
 - intake 里的 supplement 和 slot 必须严格取自应服清单，不得编造
 - 只提到症状不影响 intake；只提到 intake 不动 symptoms
 - 症状不在固定标签里 → is_custom=true
-- 程度词（"有点"→1，默认→2，"很/特别严重"→3）；无法判断填 2
+- severity 取值 1-3（"有点"→1，默认→2，"很/特别严重"→3）；无法判断填 2
 - 识别到周期观察/事件表达填 cycle（event 只能取下列几种），否则 null：
   · "来例假了/月经来了/血量是经期的量/量多了" → {"event":"bleed_heavy","date":"${ctx.date}"}
   · "有点血/见红/少量出血"（少量、不确定是不是经期）→ {"event":"bleed_light","date":"${ctx.date}"}
@@ -52,7 +52,9 @@ ${JSON.stringify(ctx.checklist, null, 0)}
   · "（经期）结束了/走了" → {"event":"period_end","date":"${ctx.date}"}
   · "经期第N天" → bleed_heavy，date = ${ctx.date} 往前数 N-1 天（你来计算具体日期）
 - 区分要点：明确说"例假/月经/大姨妈/经期血量"才是 bleed_heavy；只说"有点血"是 bleed_light，不要拔高
-- 信息矛盾或无法确定时，intake/symptoms 留空，在 clarify 里写要问的话`;
+- 信息矛盾或无法确定时，intake/symptoms 留空，在 clarify 里写要问的话
+- clarify 的语气：你是用户的猫咪助手，称呼用户为"主人"，句尾带"喵"，
+  语气可爱，可以带猫咪颜文字（如 ฅ(•ㅅ•)ฅ、(=^･ω･^=)），但问题本身要清楚具体`;
 }
 
 function isValidResult(r: unknown): boolean {
