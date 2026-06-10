@@ -2,34 +2,42 @@
    日间：莫兰迪蓝配粉；夜间：黑配粉。全部颜色走变量，组件不写死色值。 */
 
 :root {
-  --bg: #e3e8ee;
-  --card: #ffffff;
-  --card-soft: #eef2f6;
-  --primary: #8fa8bf;
-  --primary-deep: #6c8aa6;
-  --accent: #e8b4bc;
-  --accent-deep: #d99aa6;
-  --text: #3a4a5a;
-  --muted: #8895a3;
-  --line: #d4dce4;
-  --ok: #9dbb9a;
-  --shadow: 0 4px 16px rgba(58, 74, 90, 0.08);
-  --radius: 20px;
+  --bg: #eaeff4;
+  --bg-tint: linear-gradient(180deg, #e7edf3 0%, #f1ecee 100%);
+  --card: #fdfdfe;
+  --card-soft: #f0f3f7;
+  --primary: #93aec5;
+  --primary-deep: #5e7a93;
+  --accent: #e7adb9;
+  --accent-deep: #d68fa0;
+  --accent-soft: #f7e3e8;
+  --hero: linear-gradient(135deg, #a8c0d6 0%, #c3b7cd 55%, #e9bcc8 100%);
+  --hero-text: #ffffff;
+  --text: #2f3e4d;
+  --muted: #94a1ae;
+  --line: #e3e9ef;
+  --shadow: 0 6px 24px rgba(94, 122, 147, 0.1);
+  --shadow-soft: 0 2px 10px rgba(94, 122, 147, 0.07);
+  --radius: 24px;
 }
 
 [data-theme='dark'] {
-  --bg: #16161a;
-  --card: #232328;
-  --card-soft: #2c2c33;
-  --primary: #5a5a66;
-  --primary-deep: #76767f;
-  --accent: #f2a6b3;
-  --accent-deep: #e58a9b;
-  --text: #f0edee;
-  --muted: #9a96a0;
-  --line: #38383f;
-  --ok: #8fae8c;
-  --shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --bg: #141418;
+  --bg-tint: linear-gradient(180deg, #15151a 0%, #1a161a 100%);
+  --card: #1f1f26;
+  --card-soft: #2a2a32;
+  --primary: #555562;
+  --primary-deep: #8e8e9c;
+  --accent: #f0a8b8;
+  --accent-deep: #e58a9f;
+  --accent-soft: #3a2b31;
+  --hero: linear-gradient(135deg, #2b2b36 0%, #383040 55%, #4a3340 100%);
+  --hero-text: #f6eef1;
+  --text: #ecebee;
+  --muted: #8d8a94;
+  --line: #2e2e36;
+  --shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  --shadow-soft: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
 * {
@@ -45,153 +53,233 @@ body {
 
 body {
   background: var(--bg);
+  background-image: var(--bg-tint);
+  background-attachment: fixed;
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Noto Sans SC', sans-serif;
   font-size: 16px;
   line-height: 1.5;
   padding-top: env(safe-area-inset-top);
   /* 底部聊天条高度 + home indicator */
-  padding-bottom: calc(env(safe-area-inset-bottom) + 88px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 96px);
   min-height: 100vh;
-  transition: background 0.25s, color 0.25s;
+  transition: background 0.3s, color 0.3s;
 }
 
 main {
   max-width: 480px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 20px;
+}
+
+button {
+  font-family: inherit;
 }
 
 /* ---------- 顶栏 ---------- */
 header.topbar {
   max-width: 480px;
   margin: 0 auto;
-  padding: 12px 16px 4px;
+  padding: 14px 20px 6px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .app-title {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 1px;
 }
 
 .app-title .paw {
   color: var(--accent-deep);
+  font-size: 16px;
 }
 
 .theme-toggle {
   border: none;
   background: var(--card);
   color: var(--text);
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  font-size: 18px;
-  box-shadow: var(--shadow);
+  font-size: 17px;
+  box-shadow: var(--shadow-soft);
   cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.theme-toggle:active {
+  transform: scale(0.9);
 }
 
 /* ---------- 周历条 ---------- */
 .week-strip {
   display: flex;
-  gap: 6px;
-  justify-content: space-between;
-  margin: 12px 0 4px;
+  gap: 7px;
+  margin: 14px 0 18px;
 }
 
 .week-day {
   flex: 1;
   text-align: center;
-  padding: 8px 0 10px;
-  border-radius: 18px;
-  border: 1px solid transparent;
+  padding: 10px 0 12px;
+  border-radius: 999px;
   color: var(--muted);
+  transition: background 0.2s;
 }
 
 .week-day .dow {
   display: block;
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 1px;
+  opacity: 0.9;
 }
 
 .week-day .dom {
   display: block;
   font-size: 15px;
-  font-weight: 600;
-  margin-top: 2px;
+  font-weight: 700;
+  margin-top: 4px;
   color: var(--text);
 }
 
 .week-day.today {
-  background: var(--card);
-  border-color: var(--accent);
+  background: linear-gradient(160deg, var(--accent) 0%, var(--accent-deep) 100%);
+  box-shadow: 0 6px 14px rgba(214, 143, 160, 0.35);
+}
+
+.week-day.today .dow,
+.week-day.today .dom {
+  color: #fff;
+}
+
+/* ---------- hero 卡 ---------- */
+.hero {
+  background: var(--hero);
+  border-radius: 28px;
   box-shadow: var(--shadow);
+  padding: 22px 22px 18px;
+  margin-bottom: 18px;
+  color: var(--hero-text);
 }
 
-.week-day.today .dow {
-  color: var(--accent-deep);
-}
-
-/* ---------- mode 徽章 ---------- */
-.mode-row {
+.hero-top {
   display: flex;
-  justify-content: center;
-  margin: 10px 0 18px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.greeting {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.date-line {
+  font-size: 13px;
+  opacity: 0.85;
+  margin-top: 4px;
+}
+
+.hero-cat {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.hero-bottom {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
 }
 
 .mode-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 18px;
+  white-space: nowrap;
+  padding: 5px 14px;
   border-radius: 999px;
-  font-size: 14px;
-  font-weight: 600;
-  background: var(--card);
-  box-shadow: var(--shadow);
-}
-
-.mode-badge.daily {
-  color: var(--primary-deep);
-}
-
-.mode-badge.pms {
-  color: var(--accent-deep);
+  font-size: 13px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.28);
+  color: var(--hero-text);
+  backdrop-filter: blur(4px);
 }
 
 .mode-badge.period {
-  background: var(--accent);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--accent-deep);
+}
+
+.progress {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  transition: width 0.4s ease;
+}
+
+.progress-text {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.95;
+  min-width: 34px;
+  text-align: right;
 }
 
 /* ---------- 通用卡片 ---------- */
 .card {
   background: var(--card);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 16px;
-  margin-bottom: 16px;
+  box-shadow: var(--shadow-soft);
+  padding: 20px;
+  margin-bottom: 18px;
 }
 
 .card h2 {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  color: var(--muted);
-  margin: 0 0 12px;
-  text-transform: uppercase;
+  font-size: 15px;
+  font-weight: 800;
+  margin: 0 0 14px;
 }
 
 /* ---------- 今日清单 ---------- */
 .slot-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
-  font-weight: 600;
-  color: var(--accent-deep);
-  letter-spacing: 1px;
-  margin: 14px 0 4px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 2px;
+  margin: 18px 0 6px;
+}
+
+.slot-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
 }
 
 .slot-label:first-child {
@@ -201,8 +289,8 @@ header.topbar {
 .intake-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 0;
+  gap: 14px;
+  padding: 9px 0;
   border: none;
   background: none;
   width: 100%;
@@ -212,86 +300,99 @@ header.topbar {
   cursor: pointer;
 }
 
-.intake-row + .intake-row {
-  border-top: 1px solid var(--line);
-}
-
 .dot {
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
   border-radius: 50%;
-  border: 2px solid var(--primary);
+  border: 2px solid var(--line);
+  background: var(--card-soft);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: transparent;
-  font-size: 15px;
-  transition: background 0.15s, border-color 0.15s;
+  font-size: 14px;
+  font-weight: 800;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.intake-row:active .dot {
+  transform: scale(0.85);
 }
 
 .intake-row.taken .dot {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: linear-gradient(160deg, var(--accent) 0%, var(--accent-deep) 100%);
+  border-color: transparent;
   color: #fff;
+  box-shadow: 0 3px 8px rgba(214, 143, 160, 0.4);
+}
+
+.intake-row .info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .intake-row .name {
   font-weight: 600;
-  flex: 1;
+  font-size: 15px;
+  transition: color 0.2s;
+}
+
+.intake-row .dose {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 1px;
 }
 
 .intake-row.taken .name {
   color: var(--muted);
   text-decoration: line-through;
-}
-
-.intake-row .dose {
-  font-size: 13px;
-  color: var(--muted);
+  text-decoration-color: var(--accent);
 }
 
 /* ---------- 症状区 ---------- */
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 9px;
 }
 
 .chip {
-  border: 1px solid var(--line);
+  border: 1.5px solid var(--line);
   background: var(--card-soft);
   color: var(--text);
   border-radius: 999px;
-  padding: 7px 14px;
+  padding: 8px 16px;
   font-size: 14px;
-  font-family: inherit;
   cursor: pointer;
+  transition: transform 0.15s, background 0.2s;
+}
+
+.chip:active {
+  transform: scale(0.93);
 }
 
 .chip.active {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: linear-gradient(160deg, var(--accent) 0%, var(--accent-deep) 100%);
+  border-color: transparent;
   color: #fff;
-  font-weight: 600;
-}
-
-.chip.add-custom {
-  border-style: dashed;
-  color: var(--muted);
+  font-weight: 700;
+  box-shadow: 0 3px 10px rgba(214, 143, 160, 0.35);
 }
 
 .severity-picker {
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 14px;
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 18px;
   background: var(--card-soft);
 }
 
 .severity-picker .label {
   font-size: 13px;
+  font-weight: 600;
   color: var(--muted);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .severity-picker .options {
@@ -301,14 +402,19 @@ header.topbar {
 
 .severity-picker .options button {
   flex: 1;
-  border: 1px solid var(--line);
+  border: 1.5px solid var(--line);
   background: var(--card);
   color: var(--text);
   border-radius: 999px;
-  padding: 8px 0;
-  font-family: inherit;
+  padding: 9px 0;
   font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+}
+
+.severity-picker .options button:active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
 }
 
 .severity-picker .options button.danger {
@@ -318,19 +424,23 @@ header.topbar {
 .custom-symptom {
   display: flex;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 14px;
 }
 
 .custom-symptom input {
   flex: 1;
-  border: 1px solid var(--line);
+  border: 1.5px solid var(--line);
   background: var(--card-soft);
   color: var(--text);
   border-radius: 999px;
-  padding: 8px 14px;
+  padding: 9px 16px;
   font-family: inherit;
   font-size: 14px;
   outline: none;
+}
+
+.custom-symptom input:focus {
+  border-color: var(--accent);
 }
 
 .custom-symptom button {
@@ -338,9 +448,9 @@ header.topbar {
   background: var(--primary);
   color: #fff;
   border-radius: 999px;
-  padding: 8px 16px;
-  font-family: inherit;
+  padding: 9px 18px;
   font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -350,74 +460,105 @@ header.topbar {
 }
 
 .bubble {
-  border-radius: 18px;
-  padding: 10px 14px;
-  margin: 8px 0;
+  border-radius: 20px;
+  padding: 11px 16px;
+  margin: 10px 0;
   max-width: 85%;
+  width: fit-content;
   font-size: 15px;
 }
 
 .bubble.user {
-  background: var(--primary);
+  background: linear-gradient(160deg, var(--primary) 0%, var(--primary-deep) 100%);
   color: #fff;
   margin-left: auto;
-  border-bottom-right-radius: 6px;
+  border-bottom-right-radius: 7px;
 }
 
 .bubble.tabby {
   background: var(--card);
-  box-shadow: var(--shadow);
-  border-bottom-left-radius: 6px;
+  box-shadow: var(--shadow-soft);
+  border-bottom-left-radius: 7px;
 }
 
 .bubble.tabby.thinking {
   color: var(--muted);
-  font-style: italic;
+}
+
+.bubble.tabby.thinking::after {
+  content: '…';
+  animation: dots 1.2s infinite;
+}
+
+@keyframes dots {
+  0% { content: ''; }
+  33% { content: '·'; }
+  66% { content: '··'; }
+  100% { content: '···'; }
 }
 
 /* 预览卡 */
 .preview-card {
   background: var(--card);
-  border: 1.5px solid var(--accent);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 14px;
-  margin: 10px 0;
+  padding: 18px;
+  margin: 12px 0;
+  border: 1.5px solid var(--accent-soft);
 }
 
 .preview-card .hint {
   font-size: 12px;
   color: var(--muted);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .preview-card .section-title {
   font-size: 12px;
-  color: var(--muted);
-  letter-spacing: 1px;
-  margin: 10px 0 4px;
+  font-weight: 700;
+  color: var(--accent-deep);
+  letter-spacing: 2px;
+  margin: 12px 0 4px;
 }
 
 .preview-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
   border: none;
   background: none;
   font: inherit;
   color: inherit;
   text-align: left;
-  padding: 6px 0;
+  padding: 7px 0;
   cursor: pointer;
 }
 
 .preview-row .mark {
-  font-size: 15px;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(160deg, var(--accent) 0%, var(--accent-deep) 100%);
+}
+
+.preview-row.off .mark {
+  background: var(--card-soft);
+  color: var(--muted);
+  border: 1.5px solid var(--line);
 }
 
 .preview-row .pname {
   flex: 1;
+  font-weight: 600;
+  font-size: 15px;
 }
 
 .preview-row.off .pname {
@@ -432,30 +573,35 @@ header.topbar {
 
 .preview-row .remove {
   color: var(--muted);
-  font-size: 13px;
-  padding: 0 4px;
+  font-size: 14px;
+  padding: 2px 6px;
 }
 
 .preview-actions {
   display: flex;
   gap: 10px;
-  margin-top: 12px;
+  margin-top: 14px;
 }
 
 .btn {
   flex: 1;
   border: none;
   border-radius: 999px;
-  padding: 12px 0;
-  font-family: inherit;
+  padding: 13px 0;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
+  transition: transform 0.15s, opacity 0.2s;
+}
+
+.btn:active {
+  transform: scale(0.97);
 }
 
 .btn.primary {
-  background: var(--accent);
+  background: linear-gradient(160deg, var(--accent) 0%, var(--accent-deep) 100%);
   color: #fff;
+  box-shadow: 0 4px 14px rgba(214, 143, 160, 0.4);
 }
 
 .btn.ghost {
@@ -469,44 +615,52 @@ header.topbar {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 10px 16px calc(env(safe-area-inset-bottom) + 10px);
-  background: var(--bg);
-  border-top: 1px solid var(--line);
+  padding: 12px 20px calc(env(safe-area-inset-bottom) + 12px);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .chat-bar .inner {
   max-width: 480px;
   margin: 0 auto;
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
 .chat-bar input {
   flex: 1;
-  border: 1px solid var(--line);
+  border: none;
   background: var(--card);
   color: var(--text);
   border-radius: 999px;
-  padding: 12px 18px;
+  padding: 13px 20px;
   font-family: inherit;
   font-size: 16px; /* >=16px 防 iOS 聚焦自动放大 */
   outline: none;
+  box-shadow: var(--shadow-soft);
 }
 
-.chat-bar input:focus {
-  border-color: var(--accent);
+.chat-bar input::placeholder {
+  color: var(--muted);
 }
 
 .chat-bar button {
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
+  width: 50px;
+  height: 50px;
+  min-width: 50px;
   border: none;
   border-radius: 50%;
-  background: var(--accent);
+  background: linear-gradient(160deg, var(--accent) 0%, var(--accent-deep) 100%);
   color: #fff;
-  font-size: 18px;
+  font-size: 19px;
   cursor: pointer;
+  box-shadow: 0 4px 14px rgba(214, 143, 160, 0.45);
+  transition: transform 0.15s;
+}
+
+.chat-bar button:active {
+  transform: scale(0.9);
 }
 
 .chat-bar button:disabled {
@@ -516,13 +670,20 @@ header.topbar {
 /* ---------- 横幅提示 ---------- */
 .banner {
   max-width: 480px;
-  margin: 8px auto 0;
-  padding: 10px 16px;
-  border-radius: 14px;
+  margin: 8px 20px 0;
+  padding: 11px 16px;
+  border-radius: 16px;
   font-size: 13px;
-  background: var(--card-soft);
-  color: var(--muted);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
   text-align: center;
+}
+
+@media (min-width: 520px) {
+  .banner {
+    margin-left: auto;
+    margin-right: auto;
+  }
 }
 
 .banner.hidden {

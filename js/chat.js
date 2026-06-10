@@ -70,7 +70,7 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit })
     card.className = 'preview-card';
     const hint = document.createElement('div');
     hint.className = 'hint';
-    hint.textContent = '确认一下：点条目可修改（补剂切换✅/❌，症状点击调程度，✕ 删除）';
+    hint.textContent = '确认一下：点补剂行切换吃没吃，点症状调程度，✕ 删除';
     card.appendChild(hint);
     rebuild();
     logEl.appendChild(card);
@@ -85,7 +85,7 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit })
           const row = document.createElement('button');
           row.className = `preview-row${item.taken ? '' : ' off'}`;
           row.innerHTML = `<span class="mark"></span><span class="pname"></span><span class="meta"></span>`;
-          row.querySelector('.mark').textContent = item.taken ? '✅' : '❌';
+          row.querySelector('.mark').textContent = item.taken ? '✓' : '✕';
           row.querySelector('.pname').textContent = item.supplement;
           row.querySelector('.meta').textContent = `${SLOT_SHORT[item.slot]} · ${item.dose}`;
           row.addEventListener('click', () => {
@@ -101,7 +101,7 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit })
         draft.symptoms.forEach((s, idx) => {
           const row = document.createElement('button');
           row.className = 'preview-row';
-          row.innerHTML = `<span class="mark">🩷</span><span class="pname"></span><span class="meta"></span><span class="remove">✕</span>`;
+          row.innerHTML = `<span class="mark">♥</span><span class="pname"></span><span class="meta"></span><span class="remove">✕</span>`;
           row.querySelector('.pname').textContent = s.symptom + (s.is_custom ? '（新）' : '');
           row.querySelector('.meta').textContent = severityLabel(s.severity);
           row.addEventListener('click', (e) => {
@@ -120,7 +120,7 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit })
         card.appendChild(sectionTitle('经期'));
         const row = document.createElement('button');
         row.className = 'preview-row';
-        row.innerHTML = `<span class="mark">🌙</span><span class="pname"></span><span class="remove">✕</span>`;
+        row.innerHTML = `<span class="mark">☾</span><span class="pname"></span><span class="remove">✕</span>`;
         row.querySelector('.pname').textContent =
           (draft.cycle.event === 'period_start' ? '经期开始' : '经期结束') + ` · ${draft.cycle.date}`;
         row.addEventListener('click', (e) => {

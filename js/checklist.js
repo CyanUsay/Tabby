@@ -23,8 +23,7 @@ export function renderChecklist(container, checklist, intakeMap, onToggle) {
       btn.className = `intake-row${taken ? ' taken' : ''}`;
       btn.innerHTML = `
         <span class="dot">✓</span>
-        <span class="name"></span>
-        <span class="dose"></span>`;
+        <span class="info"><span class="name"></span><span class="dose"></span></span>`;
       btn.querySelector('.name').textContent = item.supplement;
       btn.querySelector('.dose').textContent = item.dose;
       btn.addEventListener('click', () => onToggle(item, !taken));

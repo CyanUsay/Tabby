@@ -89,9 +89,30 @@ function renderModeBadge() {
     mode === 'period' ? `🌙 经期 Day ${dayN}` : mode === 'pms' ? '🌸 PMS' : '☁️ 日常';
 }
 
+function renderHero() {
+  const h = new Date().getHours();
+  const greeting =
+    h < 5 || h >= 23 ? '夜深了，照顾好自己'
+    : h < 11 ? '早上好呀'
+    : h < 14 ? '中午好呀'
+    : h < 18 ? '下午好呀'
+    : '晚上好呀';
+  $('greeting').textContent = greeting;
+  const DOW = ['日', '一', '二', '三', '四', '五', '六'];
+  const [, m, d] = state.today.split('-').map(Number);
+  const dow = DOW[new Date().getDay()];
+  $('date-line').textContent = `${m} 月 ${d} 日 · 周${dow}`;
+
+  const total = state.checklist.length;
+  const taken = state.checklist.filter((i) => state.intakeMap.get(intakeKey(i))?.taken).length;
+  $('progress-fill').style.width = total ? `${(taken / total) * 100}%` : '0%';
+  $('progress-text').textContent = `${taken}/${total}`;
+}
+
 function renderAll() {
   renderWeekStrip();
   renderModeBadge();
+  renderHero();
   renderChecklist($('checklist'), state.checklist, state.intakeMap, onToggleIntake);
   renderSymptoms(
     {
@@ -124,11 +145,13 @@ async function onToggleIntake(item, nextTaken) {
   };
   state.intakeMap.set(intakeKey(item), row); // 乐观更新
   renderChecklist($('checklist'), state.checklist, state.intakeMap, onToggleIntake);
+  renderHero();
   try {
     await db.upsertIntake([row]);
   } catch (e) {
     row.taken = !nextTaken;
     renderChecklist($('checklist'), state.checklist, state.intakeMap, onToggleIntake);
+    renderHero();
     console.error(e);
   }
 }
