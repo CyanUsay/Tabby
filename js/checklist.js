@@ -40,7 +40,6 @@ export function renderChecklist(container, checklist, intakeMap, handlers) {
         <span class="slot-name"></span>
         <span class="slot-sub"></span>
       </span>
-      <span class="slot-chev">▾</span>
       <span class="slot-check${allTaken ? ' done' : ''}">✓</span>`;
     head.querySelector('.slot-icon').textContent = SLOT_META[slot].icon;
     head.querySelector('.slot-name').textContent = SLOT_LABELS[slot];

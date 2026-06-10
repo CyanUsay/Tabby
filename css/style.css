@@ -212,11 +212,11 @@ header.topbar {
 }
 
 .bw-day .hl.period {
-  background: color-mix(in srgb, var(--accent) 38%, transparent);
+  background: color-mix(in srgb, #ff6f9c 62%, transparent);
 }
 
 .bw-day .hl.pms {
-  background: color-mix(in srgb, #9d8fe0 34%, transparent);
+  background: color-mix(in srgb, #9c7bff 55%, transparent);
 }
 
 .bw-day .hl.run-start {
@@ -288,11 +288,11 @@ header.topbar {
 }
 
 .lg-hl.period {
-  background: color-mix(in srgb, var(--accent) 38%, transparent);
+  background: color-mix(in srgb, #ff6f9c 62%, transparent);
 }
 
 .lg-hl.pms {
-  background: color-mix(in srgb, #9d8fe0 34%, transparent);
+  background: color-mix(in srgb, #9c7bff 55%, transparent);
 }
 
 .lg-ul {
@@ -341,7 +341,9 @@ header.topbar {
 
 .done-ring {
   position: absolute;
-  inset: -1px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   transform: rotate(-90deg);
   pointer-events: none;
 }
@@ -373,48 +375,77 @@ header.topbar {
   letter-spacing: 1px;
 }
 
-.done-sub {
-  font-size: 11px;
-  color: var(--muted);
-}
-
-/* 完成庆祝弹层 */
-.celebrate {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background: rgba(0, 0, 0, 0.18);
-  z-index: 50;
-  animation: fade-in 0.2s ease;
-}
-
-.celebrate img {
-  width: 96px;
-  height: 96px;
+/* 完成后：小猫 logo 像盖章一样盖在按钮上 */
+.done-stamp {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 62px;
+  height: 62px;
+  margin: -31px 0 0 -31px;
   border-radius: 50%;
-  border: 4px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  animation: pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: rotate(-12deg);
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
 }
 
-.celebrate .say {
+.done-btn.done .done-stamp {
+  opacity: 0.95;
+}
+
+.done-btn.done .done-label {
+  display: none;
+}
+
+/* 盖章瞬间：图章砸下 + 按钮被砸得一颤 */
+.done-btn.stamp-in .done-stamp {
+  animation: stamp-drop 0.4s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.done-btn.stamp-in {
+  animation: stamp-impact 0.4s ease;
+}
+
+@keyframes stamp-drop {
+  0% { transform: rotate(-30deg) scale(2.2); opacity: 0; }
+  60% { transform: rotate(-12deg) scale(0.92); opacity: 1; }
+  100% { transform: rotate(-12deg) scale(1); opacity: 0.95; }
+}
+
+@keyframes stamp-impact {
+  0%, 100% { transform: scale(1); }
+  55% { transform: scale(0.93); }
+  80% { transform: scale(1.03); }
+}
+
+/* "太棒了喵"气泡：浮在按钮上方 */
+.done-say {
+  position: absolute;
+  left: 50%;
+  top: -34px;
+  transform: translateX(-50%);
+  white-space: nowrap;
   background: var(--card);
-  color: var(--text);
+  border: 1px solid var(--glass-border);
   border-radius: 999px;
-  padding: 9px 20px;
-  font-size: 16px;
+  padding: 5px 14px;
+  font-size: 13px;
   font-weight: 700;
+  color: var(--accent-deep);
   box-shadow: var(--shadow);
-  animation: pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 5;
 }
 
 @keyframes pop-in {
-  from { transform: scale(0.4); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from { transform: translateX(-50%) scale(0.4); opacity: 0; }
+  to { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+.done-sub {
+  font-size: 11px;
+  color: var(--muted);
 }
 
 @keyframes fade-in {
@@ -540,15 +571,6 @@ header.topbar {
   min-width: 0;
 }
 
-.slot-chev {
-  color: var(--faint);
-  font-size: 13px;
-  transition: transform 0.2s;
-}
-
-.slot-card.open .slot-chev {
-  transform: rotate(180deg);
-}
 
 .slot-name {
   font-size: 16px;
@@ -821,6 +843,13 @@ header.topbar {
 
 .severity-picker .options button.danger {
   color: var(--faint);
+}
+
+/* 当前已选的程度：描边标识 */
+.severity-picker .options button.cur {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 1px;
+  font-weight: 700;
 }
 
 .custom-symptom {
@@ -1109,13 +1138,21 @@ header.topbar {
   gap: 10px;
 }
 
+/* 分割线：以下是聊天记录；小猫坐在线的右上角，激活才变粉 */
+.chat-divider {
+  position: relative;
+  height: 1px;
+  background: var(--line);
+  margin: 30px 2px 12px;
+}
+
 .chat-cat {
   position: absolute;
-  right: 64px;
-  top: -26px;
+  right: 6px;
+  bottom: 0;
   font-size: 13px;
   font-weight: 600;
-  color: var(--muted);
+  color: var(--faint);
   cursor: pointer;
   -webkit-user-select: none;
   user-select: none;
@@ -1126,20 +1163,23 @@ header.topbar {
   color: var(--accent-deep);
 }
 
+/* 未激活：普通玻璃样式；聚焦后变粉色框 */
 .chat-bar input {
   flex: 1;
-  border: 1.5px solid var(--accent);
+  border: 1px solid var(--glass-border);
   color: var(--text);
   border-radius: 999px;
   padding: 12px 20px;
   font-family: inherit;
   font-size: 16px; /* >=16px 防 iOS 聚焦自动放大 */
   outline: none;
-  box-shadow: 0 4px 16px rgba(214, 128, 154, 0.22);
+  box-shadow: var(--shadow-soft);
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .chat-bar input:focus {
-  border-color: var(--accent-deep);
+  border: 1.5px solid var(--accent);
+  box-shadow: 0 4px 16px rgba(214, 128, 154, 0.3);
 }
 
 .chat-bar input::placeholder {
@@ -1168,25 +1208,36 @@ header.topbar {
   opacity: 0.4;
 }
 
-/* 确认弹窗（取消打卡等） */
+/* 确认弹窗（取消打卡等）：粉色半透明遮罩 + 实底卡片 */
 .modal-layer {
   position: fixed;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.22);
+  background: color-mix(in srgb, #e8a3b8 42%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   z-index: 60;
   animation: fade-in 0.15s ease;
 }
 
+[data-theme='dark'] .modal-layer {
+  background: color-mix(in srgb, #b16a85 36%, transparent);
+}
+
 .modal-box {
   width: min(320px, 84vw);
-  background: var(--card);
-  border: 1px solid var(--glass-border);
+  background: #fdf3f6;
+  border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 20px;
   box-shadow: var(--shadow);
   padding: 18px;
+}
+
+[data-theme='dark'] .modal-box {
+  background: #34262d;
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .modal-text {

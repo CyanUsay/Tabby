@@ -59,7 +59,9 @@
             <circle class="done-track" cx="56" cy="56" r="50" />
             <circle id="done-arc" class="done-arc" cx="56" cy="56" r="50" stroke="url(#doneGrad)" />
           </svg>
+          <img id="done-stamp" class="done-stamp" src="./icons/icon-192.png" alt="" />
           <span id="done-label" class="done-label">长按打卡</span>
+          <span id="done-say" class="done-say" hidden>太棒了喵！ฅ^•ﻌ•^ฅ</span>
         </button>
         <div class="done-sub" id="done-sub">今天正常完成</div>
       </div>
@@ -107,12 +109,16 @@
       </div>
     </section>
 
+    <!-- 分割线：以下是与 Tabby 的聊天记录；小猫坐在线的右上角 -->
+    <div class="chat-divider">
+      <span id="chat-cat" class="chat-cat">(=˘ω˘=) zzZ</span>
+    </div>
+
     <section id="chat-log" class="chat-log"></section>
   </main>
 
   <div class="chat-bar">
     <div class="inner">
-      <span id="chat-cat" class="chat-cat">(=˘ω˘=) zzZ</span>
       <input id="chat-input" type="text" placeholder="跟 Tabby 说点什么喵…" enterkeyhint="send" />
       <button id="chat-send" aria-label="发送">↑</button>
     </div>
