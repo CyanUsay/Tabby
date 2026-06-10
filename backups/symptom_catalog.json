@@ -1,0 +1,44 @@
+[
+  {
+    "name": "发热感",
+    "is_fixed": true,
+    "first_seen": "2026-06-10",
+    "count": 0
+  },
+  {
+    "name": "噩梦",
+    "is_fixed": true,
+    "first_seen": "2026-06-10",
+    "count": 0
+  },
+  {
+    "name": "头痛",
+    "is_fixed": true,
+    "first_seen": "2026-06-10",
+    "count": 0
+  },
+  {
+    "name": "情绪低落",
+    "is_fixed": true,
+    "first_seen": "2026-06-10",
+    "count": 0
+  },
+  {
+    "name": "精力",
+    "is_fixed": true,
+    "first_seen": "2026-06-10",
+    "count": 0
+  },
+  {
+    "name": "胸胀",
+    "is_fixed": true,
+    "first_seen": "2026-06-10",
+    "count": 0
+  },
+  {
+    "name": "腹痛",
+    "is_fixed": true,
+    "first_seen": "2026-06-10",
+    "count": 0
+  }
+]
