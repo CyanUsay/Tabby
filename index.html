@@ -18,11 +18,6 @@
   <link rel="stylesheet" href="./css/style.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="app-title">TABBY</div>
-    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">☀️</button>
-  </header>
-
   <div id="install-hint" class="banner hidden">
     用 Safari 打开 → 分享 → 添加到主屏幕，就能像 app 一样全屏使用
   </div>
@@ -32,26 +27,62 @@
 
   <main>
     <section class="hero">
-      <div id="date-line" class="date-line"></div>
-      <div id="greeting" class="greeting">你好</div>
-      <div class="hero-bottom">
-        <span id="mode-badge" class="mode-badge daily">日常</span>
-        <div class="progress">
-          <div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div>
-          <span id="progress-text" class="progress-text">0/0</span>
+      <div class="hero-row">
+        <div>
+          <div id="greeting" class="greeting">你好</div>
+          <div id="date-line" class="date-line"></div>
+        </div>
+        <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">☀️</button>
+      </div>
+    </section>
+
+    <h2 class="section-heading">今日进度</h2>
+    <section class="card progress-card">
+      <div class="ring-wrap">
+        <svg viewBox="0 0 120 120" class="ring">
+          <defs>
+            <linearGradient id="ringGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#e88aa0" />
+              <stop offset="100%" stop-color="#7eb3e8" />
+            </linearGradient>
+          </defs>
+          <circle class="ring-bg" cx="60" cy="60" r="52" />
+          <circle id="ring-fill" class="ring-fill" cx="60" cy="60" r="52" stroke="url(#ringGrad)" />
+        </svg>
+        <div class="ring-center">
+          <div id="ring-pct" class="ring-pct">0%</div>
+          <div id="ring-sub" class="ring-sub">0/0 已完成</div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-icon" data-tint="blue">✦</span>
+          <span class="stat-label">状态</span>
+          <span id="stat-mode" class="stat-value">日常</span>
+        </div>
+        <div class="stat">
+          <span class="stat-icon" data-tint="purple">☾</span>
+          <span class="stat-label">下次经期</span>
+          <span id="stat-next" class="stat-value">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-icon" data-tint="pink">♥</span>
+          <span class="stat-label">今日症状</span>
+          <span id="stat-symptoms" class="stat-value">0 项</span>
+        </div>
+        <div class="stat">
+          <span class="stat-icon" data-tint="orange">✚</span>
+          <span class="stat-label">今日补剂</span>
+          <span id="stat-count" class="stat-value">0 种</span>
         </div>
       </div>
     </section>
 
-    <div id="week-strip" class="week-strip"></div>
+    <h2 class="section-heading">今日安排</h2>
+    <div id="checklist" class="timeline"></div>
 
+    <h2 class="section-heading">今日症状</h2>
     <section class="card">
-      <h2>今日补剂</h2>
-      <div id="checklist"></div>
-    </section>
-
-    <section class="card">
-      <h2>今日症状</h2>
       <div id="symptom-chips" class="chips"></div>
       <div id="severity-picker"></div>
       <div class="custom-symptom">

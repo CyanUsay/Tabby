@@ -2,7 +2,7 @@
 // Supabase 拉取失败时降级为只读（本地清单仍可见）。
 
 import { cycleConfig } from './config.js';
-import { appToday, weekOf } from './dates.js';
+import { appToday, diffDays } from './dates.js';
 import { getChecklist } from './protocol.js';
 import { deriveMode } from './cycle.js';
 import * as realDb from './db.js';
@@ -67,53 +67,54 @@ if (!isStandalone && !localStorage.getItem('tabby-install-hinted')) {
 }
 
 /* ---------- 渲染 ---------- */
-function renderWeekStrip() {
-  const el = $('week-strip');
-  el.innerHTML = '';
-  const DOW = ['一', '二', '三', '四', '五', '六', '日'];
-  weekOf(state.today).forEach((dateStr, i) => {
-    const day = document.createElement('div');
-    day.className = `week-day${dateStr === state.today ? ' today' : ''}`;
-    day.innerHTML = `<span class="dow"></span><span class="dom"></span>`;
-    day.querySelector('.dow').textContent = DOW[i];
-    day.querySelector('.dom').textContent = String(Number(dateStr.slice(8)));
-    el.appendChild(day);
+function renderHero() {
+  const h = new Date().getHours();
+  const [greeting, emoji] =
+    h < 5 || h >= 23 ? ['夜深了', '🌙']
+    : h < 11 ? ['早上好', '☀️']
+    : h < 14 ? ['中午好', '🍱']
+    : h < 18 ? ['下午好', '🫖']
+    : ['晚上好', '🌆'];
+  $('greeting').textContent = `${greeting} ${emoji}`;
+  const DOW = ['日', '一', '二', '三', '四', '五', '六'];
+  const [, m, d] = state.today.split('-').map(Number);
+  $('date-line').textContent =
+    `${m}月${d}日 星期${DOW[new Date().getDay()]} · 今天也照顾好自己`;
+}
+
+const RING_C = 2 * Math.PI * 52; // r=52，与 SVG 一致
+
+function renderProgress() {
+  const total = state.checklist.length;
+  const taken = state.checklist.filter((i) => state.intakeMap.get(intakeKey(i))?.taken).length;
+  const frac = total ? taken / total : 0;
+  $('ring-fill').style.strokeDasharray = RING_C;
+  $('ring-fill').style.strokeDashoffset = RING_C * (1 - frac);
+  $('ring-pct').textContent = `${Math.round(frac * 100)}%`;
+  $('ring-sub').textContent = `${taken}/${total} 已完成`;
+
+  const { mode, dayN, nextPeriodDate } = state.modeInfo;
+  $('stat-mode').textContent =
+    mode === 'period' ? `经期 Day ${dayN}` : mode === 'pms' ? 'PMS 期' : '日常';
+  $('stat-next').textContent =
+    mode === 'period' || !nextPeriodDate
+      ? '—'
+      : `${diffDays(state.today, nextPeriodDate)} 天后`;
+  $('stat-symptoms').textContent = `${state.todaySymptoms.filter((s) => s.severity > 0).length} 项`;
+  $('stat-count').textContent = `${total} 种`;
+}
+
+function renderList() {
+  renderChecklist($('checklist'), state.checklist, state.intakeMap, {
+    onToggle: onToggleIntake,
+    onToggleSlot,
   });
 }
 
-function renderModeBadge() {
-  const { mode, dayN } = state.modeInfo;
-  const badge = $('mode-badge');
-  badge.className = `mode-badge ${mode}`;
-  badge.textContent =
-    mode === 'period' ? `经期 · Day ${dayN}` : mode === 'pms' ? 'PMS 期' : '日常';
-}
-
-function renderHero() {
-  const h = new Date().getHours();
-  const greeting =
-    h < 5 || h >= 23 ? '夜深了'
-    : h < 11 ? '早上好'
-    : h < 14 ? '中午好'
-    : h < 18 ? '下午好'
-    : '晚上好';
-  $('greeting').textContent = greeting;
-  const DOW = ['日', '一', '二', '三', '四', '五', '六'];
-  const [, m, d] = state.today.split('-').map(Number);
-  const dow = DOW[new Date().getDay()];
-  $('date-line').textContent = `${m}月${d}日 · 星期${dow}`;
-
-  const total = state.checklist.length;
-  const taken = state.checklist.filter((i) => state.intakeMap.get(intakeKey(i))?.taken).length;
-  $('progress-fill').style.width = total ? `${(taken / total) * 100}%` : '0%';
-  $('progress-text').textContent = `${taken}/${total}`;
-}
-
 function renderAll() {
-  renderWeekStrip();
-  renderModeBadge();
   renderHero();
-  renderChecklist($('checklist'), state.checklist, state.intakeMap, onToggleIntake);
+  renderProgress();
+  renderList();
   renderSymptoms(
     {
       chipsEl: $('symptom-chips'),
@@ -133,27 +134,49 @@ function recomputeMode() {
 }
 
 /* ---------- 写库操作 ---------- */
-async function onToggleIntake(item, nextTaken) {
-  if (state.degraded) return;
-  const row = {
+function intakeRowOf(item, taken) {
+  return {
     date: state.today,
     supplement: item.supplement,
     slot: item.slot,
     dose: item.dose,
-    taken: nextTaken,
+    taken,
     mode: state.modeInfo.mode,
   };
-  state.intakeMap.set(intakeKey(item), row); // 乐观更新
-  renderChecklist($('checklist'), state.checklist, state.intakeMap, onToggleIntake);
-  renderHero();
+}
+
+async function persistIntake(rows, prev) {
   try {
-    await db.upsertIntake([row]);
+    await db.upsertIntake(rows);
   } catch (e) {
-    row.taken = !nextTaken;
-    renderChecklist($('checklist'), state.checklist, state.intakeMap, onToggleIntake);
-    renderHero();
+    for (const [key, row] of prev) {
+      if (row) state.intakeMap.set(key, row);
+      else state.intakeMap.delete(key);
+    }
+    renderList();
+    renderProgress();
     console.error(e);
   }
+}
+
+async function onToggleIntake(item, nextTaken) {
+  if (state.degraded) return;
+  const key = intakeKey(item);
+  const prev = [[key, state.intakeMap.get(key)]];
+  state.intakeMap.set(key, intakeRowOf(item, nextTaken)); // 乐观更新
+  renderList();
+  renderProgress();
+  await persistIntake([state.intakeMap.get(key)], prev);
+}
+
+async function onToggleSlot(items, nextTaken) {
+  if (state.degraded) return;
+  const prev = items.map((i) => [intakeKey(i), state.intakeMap.get(intakeKey(i))]);
+  const rows = items.map((i) => intakeRowOf(i, nextTaken));
+  rows.forEach((r, idx) => state.intakeMap.set(intakeKey(items[idx]), r));
+  renderList();
+  renderProgress();
+  await persistIntake(rows, prev);
 }
 
 async function onLogSymptom(symptom, severity, isCustom) {

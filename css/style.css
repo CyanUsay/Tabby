@@ -20,12 +20,10 @@
   --line: rgba(51, 64, 90, 0.1);
   --accent: #d6809a;
   --accent-deep: #c46d88;
-  --accent-soft: rgba(214, 128, 154, 0.14);
   --blue: #7c9cc4;
   --shadow: 0 8px 28px rgba(80, 100, 140, 0.14);
   --shadow-soft: 0 2px 12px rgba(80, 100, 140, 0.1);
   --radius: 22px;
-  --serif: ui-serif, 'New York', Georgia, 'Songti SC', 'Noto Serif SC', serif;
 }
 
 [data-theme='dark'] {
@@ -44,7 +42,6 @@
   --line: rgba(255, 255, 255, 0.08);
   --accent: #e89cb0;
   --accent-deep: #dd86a0;
-  --accent-soft: rgba(232, 156, 176, 0.16);
   --blue: #8aa3c8;
   --shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
   --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.35);
@@ -95,6 +92,7 @@ button {
 .severity-picker,
 .theme-toggle,
 .chip,
+.slot-card,
 .custom-symptom input,
 .chat-bar input {
   background: var(--glass);
@@ -103,29 +101,37 @@ button {
   border: 1px solid var(--glass-border);
 }
 
-/* ---------- 顶栏 ---------- */
-header.topbar {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 18px 20px 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+/* ---------- 页头 ---------- */
+.hero {
+  margin: 20px 0 4px;
 }
 
-.app-title {
+.hero-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.greeting {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.date-line {
   font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 5px;
   color: var(--muted);
+  margin-top: 3px;
 }
 
 .theme-toggle {
   color: var(--text);
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  font-size: 14px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 15px;
+  font-size: 16px;
   cursor: pointer;
   box-shadow: var(--shadow-soft);
   transition: transform 0.15s;
@@ -135,186 +141,244 @@ header.topbar {
   transform: scale(0.9);
 }
 
-/* ---------- 页头 ---------- */
-.hero {
-  margin: 24px 0 6px;
-}
-
-.date-line {
-  font-size: 12px;
-  letter-spacing: 2px;
-  color: var(--muted);
-}
-
-.greeting {
-  font-family: var(--serif);
-  font-size: 32px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  margin-top: 2px;
-}
-
-.hero-bottom {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: 16px;
-}
-
-.mode-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  white-space: nowrap;
-  padding: 5px 14px;
-  border-radius: 999px;
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  color: var(--text);
-  background: var(--glass-strong);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-soft);
-}
-
-.mode-badge::before {
-  content: '';
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--blue);
-}
-
-.mode-badge.pms::before {
-  background: var(--accent);
-}
-
-.mode-badge.period {
-  color: var(--accent-deep);
-}
-
-.mode-badge.period::before {
-  background: var(--accent-deep);
-}
-
-.progress {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.progress-track {
-  flex: 1;
-  height: 4px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.45);
-  overflow: hidden;
-}
-
-[data-theme='dark'] .progress-track {
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.progress-fill {
-  height: 100%;
-  width: 0%;
-  border-radius: 999px;
-  background: var(--accent);
-  transition: width 0.4s ease;
-}
-
-.progress-text {
-  font-size: 12px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: var(--muted);
-  min-width: 32px;
-  text-align: right;
-}
-
-/* ---------- 周历条 ---------- */
-.week-strip {
-  display: flex;
-  margin: 16px 0 20px;
-}
-
-.week-day {
-  flex: 1;
-  text-align: center;
-  padding: 6px 0;
-}
-
-.week-day .dow {
-  display: block;
-  font-size: 10px;
-  letter-spacing: 1px;
-  color: var(--faint);
-}
-
-.week-day .dom {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  font-size: 14px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  margin-top: 5px;
-  color: var(--muted);
-}
-
-.week-day.today .dow {
-  color: var(--accent-deep);
-}
-
-.week-day.today .dom {
-  background: var(--text);
-  color: var(--bg-base);
-  box-shadow: var(--shadow-soft);
+/* ---------- 区块标题 ---------- */
+.section-heading {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 24px 2px 12px;
 }
 
 /* ---------- 通用卡片 ---------- */
 .card {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 20px;
-  margin-bottom: 16px;
+  padding: 18px;
+  margin-bottom: 8px;
 }
 
-.card h2 {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  color: var(--muted);
-  margin: 0 0 14px;
-}
-
-/* ---------- 今日清单 ---------- */
-.slot-label {
+/* ---------- 进度卡 ---------- */
+.progress-card {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--faint);
-  letter-spacing: 2px;
-  margin: 16px 0 4px;
+  align-items: center;
+  gap: 16px;
 }
 
-.slot-label:first-child {
-  margin-top: 0;
+.ring-wrap {
+  position: relative;
+  width: 128px;
+  min-width: 128px;
+  height: 128px;
+}
+
+.ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ring-bg,
+.ring-fill {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
+.ring-bg {
+  stroke: rgba(255, 255, 255, 0.45);
+}
+
+[data-theme='dark'] .ring-bg {
+  stroke: rgba(255, 255, 255, 0.1);
+}
+
+.ring-fill {
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ring-pct {
+  font-size: 26px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.ring-sub {
+  font-size: 10.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.stats {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  border-left: 1px solid var(--line);
+  padding-left: 16px;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.stat-icon {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.stat-icon[data-tint='pink'] { background: rgba(232, 138, 160, 0.18); color: #d6809a; }
+.stat-icon[data-tint='blue'] { background: rgba(126, 179, 232, 0.18); color: #6e9fd0; }
+.stat-icon[data-tint='purple'] { background: rgba(157, 143, 224, 0.18); color: #8d7fd0; }
+.stat-icon[data-tint='orange'] { background: rgba(240, 169, 92, 0.2); color: #d99547; }
+
+.stat-label {
+  font-size: 13px;
+  color: var(--muted);
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 时间线 + 时段卡 ---------- */
+.timeline {
+  position: relative;
+  padding-left: 24px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 16px;
+  bottom: 16px;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #e88aa0, #f0a95c, #9d8fe0, #7eb3e8);
+  opacity: 0.4;
+}
+
+.slot-card {
+  position: relative;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 6px 16px 8px;
+  margin-bottom: 12px;
+}
+
+.slot-card::before {
+  content: '';
+  position: absolute;
+  left: -25px;
+  top: 28px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--slot-color);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.45);
+}
+
+[data-theme='dark'] .slot-card::before {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.slot-head {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  padding: 10px 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.slot-icon {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  border-radius: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 21px;
+  background: color-mix(in srgb, var(--slot-color) 16%, transparent);
+}
+
+.slot-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.slot-name {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.slot-sub {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.slot-check {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border-radius: 50%;
+  border: 1.5px solid var(--faint);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+  font-size: 13px;
+  font-weight: 800;
+  transition: background 0.18s, border-color 0.18s;
+}
+
+.slot-check.done {
+  background: var(--slot-color);
+  border-color: var(--slot-color);
+  color: #fff;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--slot-color) 45%, transparent);
+}
+
+.slot-items {
+  border-top: 1px solid var(--line);
 }
 
 .intake-row {
   display: flex;
   align-items: center;
-  gap: 13px;
-  padding: 10px 0;
+  gap: 12px;
+  padding: 9px 0;
   border: none;
   background: none;
   width: 100%;
@@ -329,9 +393,9 @@ header.topbar {
 }
 
 .dot {
-  width: 22px;
-  height: 22px;
-  min-width: 22px;
+  width: 21px;
+  height: 21px;
+  min-width: 21px;
   border-radius: 50%;
   border: 1.5px solid var(--faint);
   background: rgba(255, 255, 255, 0.3);
@@ -339,7 +403,7 @@ header.topbar {
   align-items: center;
   justify-content: center;
   color: transparent;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
   transition: background 0.18s, border-color 0.18s, transform 0.12s;
 }
@@ -353,8 +417,8 @@ header.topbar {
 }
 
 .intake-row.taken .dot {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--slot-color, var(--accent));
+  border-color: var(--slot-color, var(--accent));
   color: #fff;
 }
 
@@ -368,7 +432,7 @@ header.topbar {
 
 .intake-row .name {
   font-weight: 500;
-  font-size: 15px;
+  font-size: 14.5px;
   transition: color 0.2s;
 }
 
@@ -493,6 +557,7 @@ header.topbar {
 
 /* ---------- 聊天区 ---------- */
 .chat-log {
+  margin-top: 16px;
   margin-bottom: 8px;
 }
 
