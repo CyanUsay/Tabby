@@ -66,14 +66,20 @@ ${JSON.stringify(ctx.checklist, null, 0)}
   语气可爱，可以带猫咪颜文字（如 ฅ(•ㅅ•)ฅ、(=^･ω･^=)），但问题本身要清楚具体`;
 }
 
-function isValidResult(r: unknown): boolean {
-  if (typeof r !== 'object' || r === null) return false;
+// 宽容规整：模型偶尔省略值为 null/[] 的键（尤其 remove-only 的回答），
+// 缺什么补什么，只要整体是个对象就接受。前端还有一道白名单兜底。
+function normalizeResult(r: unknown): Record<string, unknown> {
+  if (typeof r !== 'object' || r === null || Array.isArray(r)) {
+    throw new SyntaxError('not an object');
+  }
   const o = r as Record<string, unknown>;
-  // remove 键较新，不强制要求（模型偶尔省略 null 字段）
-  return (
-    'intake' in o && 'symptoms' in o && 'cycle' in o && 'clarify' in o &&
-    Array.isArray(o.intake) && Array.isArray(o.symptoms)
-  );
+  return {
+    intake: Array.isArray(o.intake) ? o.intake : [],
+    symptoms: Array.isArray(o.symptoms) ? o.symptoms : [],
+    cycle: o.cycle ?? null,
+    remove: o.remove ?? null,
+    clarify: typeof o.clarify === 'string' && o.clarify.trim() ? o.clarify : null,
+  };
 }
 
 async function callDeepSeek(apiKey: string, system: string, userText: string) {
@@ -101,9 +107,7 @@ async function callDeepSeek(apiKey: string, system: string, userText: string) {
   }
   const data = await res.json();
   const content = data?.choices?.[0]?.message?.content ?? '';
-  const parsed = JSON.parse(content); // 失败抛 SyntaxError，由上层重试
-  if (!isValidResult(parsed)) throw new SyntaxError('missing required keys');
-  return parsed;
+  return normalizeResult(JSON.parse(content)); // 失败抛 SyntaxError，由上层重试
 }
 
 function json(status: number, body: unknown): Response {
