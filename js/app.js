@@ -86,22 +86,22 @@ function renderModeBadge() {
   const badge = $('mode-badge');
   badge.className = `mode-badge ${mode}`;
   badge.textContent =
-    mode === 'period' ? `🌙 经期 Day ${dayN}` : mode === 'pms' ? '🌸 PMS' : '☁️ 日常';
+    mode === 'period' ? `经期 · Day ${dayN}` : mode === 'pms' ? 'PMS 期' : '日常';
 }
 
 function renderHero() {
   const h = new Date().getHours();
   const greeting =
-    h < 5 || h >= 23 ? '夜深了，照顾好自己'
-    : h < 11 ? '早上好呀'
-    : h < 14 ? '中午好呀'
-    : h < 18 ? '下午好呀'
-    : '晚上好呀';
+    h < 5 || h >= 23 ? '夜深了'
+    : h < 11 ? '早上好'
+    : h < 14 ? '中午好'
+    : h < 18 ? '下午好'
+    : '晚上好';
   $('greeting').textContent = greeting;
   const DOW = ['日', '一', '二', '三', '四', '五', '六'];
   const [, m, d] = state.today.split('-').map(Number);
   const dow = DOW[new Date().getDay()];
-  $('date-line').textContent = `${m} 月 ${d} 日 · 周${dow}`;
+  $('date-line').textContent = `${m}月${d}日 · 星期${dow}`;
 
   const total = state.checklist.length;
   const taken = state.checklist.filter((i) => state.intakeMap.get(intakeKey(i))?.taken).length;
