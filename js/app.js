@@ -31,7 +31,7 @@ const state = {
 
 /* ---------- 主题 ---------- */
 const THEME_KEY = 'tabby-theme';
-const THEME_COLORS = { light: '#e3e8ee', dark: '#16161a' };
+const THEME_COLORS = { light: '#fadce9', dark: '#16151b' };
 
 function currentTheme() {
   return (
