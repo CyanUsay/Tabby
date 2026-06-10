@@ -55,8 +55,8 @@ export function mockParse(text, context) {
       if (text.includes('胸胀')) result.symptoms.push({ symptom: '胸胀', severity: 2, is_custom: false });
       if (text.includes('情绪')) result.symptoms.push({ symptom: '情绪低落', severity: 2, is_custom: false });
       if (text.includes('膝盖疼')) result.symptoms.push({ symptom: '膝盖疼', severity: 1, is_custom: true });
-      if (text.includes('来了') || text.includes('例假')) {
-        result.cycle = { event: 'period_start', date: context.date };
+      if (text.includes('例假') || text.includes('月经') || text.includes('量多')) {
+        result.cycle = { event: 'bleed_heavy', date: context.date };
       }
       if (text.includes('结束') || text.includes('走了')) {
         result.cycle = { event: 'period_end', date: context.date };
@@ -65,10 +65,10 @@ export function mockParse(text, context) {
         result.cycle = { event: 'pms_start', date: context.date };
       }
       if (text.includes('有点血') || text.includes('见红')) {
-        result.cycle = { event: 'spotting', date: context.date };
+        result.cycle = { event: 'bleed_light', date: context.date };
       }
       if (text.includes('果冻') || text.includes('蛋清') || text.includes('拉丝')) {
-        result.cycle = { event: 'ovulation_sign', date: context.date };
+        result.cycle = { event: 'jelly', date: context.date };
       }
       resolve(result);
     }, 600);

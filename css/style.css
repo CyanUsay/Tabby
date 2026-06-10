@@ -608,6 +608,11 @@ button {
   margin: 12px 0;
 }
 
+.pms-ask-text {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
 .preview-card .hint {
   font-size: 12px;
   color: var(--faint);

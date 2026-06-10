@@ -125,8 +125,9 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit })
           period_start: '经期开始',
           period_end: '经期结束',
           pms_start: '进入 PMS',
-          spotting: '突破性出血',
-          ovulation_sign: '排卵信号',
+          jelly: '果冻状分泌物',
+          bleed_light: '少量出血',
+          bleed_heavy: '经期血量出血',
         };
         row.querySelector('.pname').textContent =
           `${EVENT_LABELS[draft.cycle.event]} · ${draft.cycle.date}`;
@@ -152,9 +153,10 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit })
         confirm.disabled = true;
         confirm.textContent = '记录中…';
         try {
-          await onCommit(draft);
+          // onCommit 可返回一句"推算结果"反馈（如"经期从 6/8 起算，今天 Day 3"）
+          const msg = await onCommit(draft);
           card.remove();
-          addBubble(logEl, 'tabby', '记好啦 ✓');
+          addBubble(logEl, 'tabby', msg || '记好啦 ✓');
         } catch (e) {
           confirm.disabled = false;
           confirm.textContent = '确认记录';

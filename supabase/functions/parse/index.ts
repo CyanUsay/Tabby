@@ -44,14 +44,14 @@ ${JSON.stringify(ctx.checklist, null, 0)}
 - 只提到症状不影响 intake；只提到 intake 不动 symptoms
 - 症状不在固定标签里 → is_custom=true
 - 程度词（"有点"→1，默认→2，"很/特别严重"→3）；无法判断填 2
-- 识别到周期事件表达填 cycle（event 只能取下列五种），否则 null：
-  · "来例假了/月经来了/来了" → {"event":"period_start","date":"${ctx.date}"}
+- 识别到周期观察/事件表达填 cycle（event 只能取下列几种），否则 null：
+  · "来例假了/月经来了/血量是经期的量/量多了" → {"event":"bleed_heavy","date":"${ctx.date}"}
+  · "有点血/见红/少量出血"（少量、不确定是不是经期）→ {"event":"bleed_light","date":"${ctx.date}"}
+  · "果冻状分泌物/蛋清状分泌物/拉丝白带" → {"event":"jelly","date":"${ctx.date}"}
+  · "PMS开始了/进入PMS了/经前期来了" → {"event":"pms_start","date":"${ctx.date}"}（注意：这不是经期！）
   · "（经期）结束了/走了" → {"event":"period_end","date":"${ctx.date}"}
-  · "经期第N天" → period_start，date = ${ctx.date} 往前数 N-1 天（你来计算具体日期）
-  · "PMS开始了/进入PMS了/经前期来了" → {"event":"pms_start","date":"${ctx.date}"}（注意：这不是经期开始！）
-  · "有点血/见红/少量出血/突破性出血"（描述非经期的少量出血）→ {"event":"spotting","date":"${ctx.date}"}
-  · "果冻状分泌物/蛋清状分泌物/拉丝白带" → {"event":"ovulation_sign","date":"${ctx.date}"}
-- 区分要点：明确说"例假/月经/大姨妈来了"才是 period_start；只说"有点血"是 spotting；说"PMS"是 pms_start
+  · "经期第N天" → bleed_heavy，date = ${ctx.date} 往前数 N-1 天（你来计算具体日期）
+- 区分要点：明确说"例假/月经/大姨妈/经期血量"才是 bleed_heavy；只说"有点血"是 bleed_light，不要拔高
 - 信息矛盾或无法确定时，intake/symptoms 留空，在 clarify 里写要问的话`;
 }
 

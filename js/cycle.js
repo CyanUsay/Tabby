@@ -1,65 +1,110 @@
-// 经期状态机。纯函数，无 IO，可单测。
-// 设计前提：用户周期不规律，预测不可靠 —— 所以 PMS 不靠预测窗口推导，
-// 完全由用户报告（pms_start 事件）触发，经期开始时自然结束（另有 pmsMaxDays 兜底）。
+// 周期推算器。纯函数，无 IO，可单测。
+//
+// 核心原则：数据库只存"观察事实"（果冻/少量出血/经期血量/口头边界），
+// "现在处于什么状态"由本函数对全部历史重新推算 —— 新观察可以回溯修正旧解读，
+// 但旧记录本身永远不需要改。
+//
+// 事件词汇：
+//   jelly        果冻状分泌物（排卵信号）
+//   bleed_light  少量出血
+//   bleed_heavy  经期血量出血（"来例假了"也算这个）
+//   period_start 旧版数据兼容，等价于 bleed_heavy
+//   period_end   口头报告经期结束
+//   pms_start    口头/确认进入 PMS
 
 import { addDays, diffDays } from './dates.js';
 
-// events: [{event, date}]，event ∈ period_start/period_end/pms_start/spotting/ovulation_sign
+const dates = (events, todayStr, ...types) =>
+  [...new Set(
+    events.filter((e) => types.includes(e.event) && e.date <= todayStr).map((e) => e.date)
+  )].sort();
+
+// 把日期列表按"相邻日期相差 ≤ maxGap+1 天"分段（maxGap=1：断档一天仍算同一段）
+function runs(dateList, maxGap) {
+  const out = [];
+  for (const d of dateList) {
+    const cur = out[out.length - 1];
+    if (cur && diffDays(cur[cur.length - 1], d) <= maxGap + 1) cur.push(d);
+    else out.push([d]);
+  }
+  return out;
+}
+
 // 返回 {
 //   mode: 'daily'|'pms'|'period',
-//   dayN: 经期第几天（period 时）,
-//   daysSinceEnd: 距最近一次经期结束的天数（经期中或无记录时 null）,
-//   ovulating: 近 3 天内有排卵信号,
+//   dayN,                 经期第几天（period 时，按回溯后的 Day1 算）
+//   periodStart,          当前/最近一次经期的起始日（回溯后），无则 null
+//   daysSinceEnd,         距最近一次经期结束的天数（经期中或无记录时 null）
+//   ovulationDate,        最近一次排卵日（果冻连续段最后一天；段进行中则暂记今天）
+//   daysSinceOvulation,   排卵后第几天（经期已来过则 null —— 计数完成使命）
+//   spottingToday,        今天是否为孤立少量出血（不并入任何经期段）
 // }
-export function deriveMode(events, todayStr, cfg) {
-  const { periodLength, pmsMaxDays = 14 } = cfg;
-  const latest = (type) => {
-    const dates = events
-      .filter((e) => e.event === type && e.date <= todayStr)
-      .map((e) => e.date)
-      .sort();
-    return dates.length ? dates[dates.length - 1] : null;
-  };
+export function deriveState(events, todayStr, cfg) {
+  const { periodLength, pmsMaxDays = 14, bleedGapDays = 1 } = cfg;
 
-  const lastStart = latest('period_start');
-  const lastSign = latest('ovulation_sign');
-  const ovulating = lastSign !== null && diffDays(lastSign, todayStr) <= 2;
+  // ---- 出血段：light+heavy 合并分段，含 heavy 的段才是经期 ----
+  const heavySet = new Set(dates(events, todayStr, 'bleed_heavy', 'period_start'));
+  const allBleeds = dates(events, todayStr, 'bleed_light', 'bleed_heavy', 'period_start');
+  const bleedRuns = runs(allBleeds, bleedGapDays);
+  const periodRuns = bleedRuns.filter((r) => r.some((d) => heavySet.has(d)));
+  const lastPeriodRun = periodRuns.length ? periodRuns[periodRuns.length - 1] : null;
 
-  if (!lastStart) {
-    return { mode: pmsActive(events, todayStr, null, pmsMaxDays) ? 'pms' : 'daily', dayN: null, daysSinceEnd: null, ovulating };
+  let mode = 'daily';
+  let dayN = null;
+  let periodStart = null;
+  let daysSinceEnd = null;
+  let lastPeriodEnd = null;
+
+  if (lastPeriodRun) {
+    periodStart = lastPeriodRun[0]; // 回溯：段内最早一天（哪怕当时记的是少量出血）
+    const lastBleed = lastPeriodRun[lastPeriodRun.length - 1];
+    const explicitEnds = dates(events, todayStr, 'period_end').filter((d) => d >= periodStart);
+    const fallbackEnd = addDays(periodStart, periodLength - 1);
+    // 没口头报结束时：默认时长兜底，但持续报血会顺延
+    const endDate = explicitEnds.length
+      ? explicitEnds[0]
+      : lastBleed > fallbackEnd ? lastBleed : fallbackEnd;
+    if (todayStr <= endDate) {
+      mode = 'period';
+      dayN = diffDays(periodStart, todayStr) + 1;
+    } else {
+      lastPeriodEnd = endDate;
+      daysSinceEnd = diffDays(endDate, todayStr);
+    }
   }
 
-  // 经期窗口：有显式 end 用 [start, end]，否则用默认 periodLength 兜底
-  const ends = events
-    .filter((e) => e.event === 'period_end' && e.date >= lastStart)
-    .map((e) => e.date)
-    .sort();
-  const explicitEnd = ends.length ? ends[0] : null;
-  const endDate = explicitEnd ?? addDays(lastStart, periodLength - 1);
+  // ---- 孤立少量出血（不正出血）----
+  const spottingToday = bleedRuns.some(
+    (r) => r.includes(todayStr) && !r.some((d) => heavySet.has(d))
+  );
 
-  if (todayStr <= endDate) {
-    return { mode: 'period', dayN: diffDays(lastStart, todayStr) + 1, daysSinceEnd: null, ovulating };
+  // ---- PMS：报告驱动，经期开始即终结，pmsMaxDays 兜底 ----
+  if (mode !== 'period') {
+    const pmsStarts = dates(events, todayStr, 'pms_start');
+    if (pmsStarts.length) {
+      const p = pmsStarts[pmsStarts.length - 1];
+      const terminated = periodStart !== null && p <= periodStart; // 已被这次经期终结
+      if (!terminated && diffDays(p, todayStr) < pmsMaxDays) mode = 'pms';
+    }
   }
 
-  const daysSinceEnd = diffDays(endDate, todayStr);
-  const mode = pmsActive(events, todayStr, lastStart, pmsMaxDays) ? 'pms' : 'daily';
-  return { mode, dayN: null, daysSinceEnd, ovulating };
+  // ---- 排卵：果冻连续段（严格逐日连续）的最后一天 ----
+  const jellies = dates(events, todayStr, 'jelly');
+  let ovulationDate = null;
+  let daysSinceOvulation = null;
+  if (jellies.length) {
+    const jellyRuns = runs(jellies, 0);
+    const lastRun = jellyRuns[jellyRuns.length - 1];
+    ovulationDate = lastRun[lastRun.length - 1];
+    // 经期已经来了 → 这次排卵计数完成使命，不再显示
+    const consumed = periodStart && periodStart >= ovulationDate;
+    daysSinceOvulation = consumed ? null : diffDays(ovulationDate, todayStr);
+  }
+
+  return { mode, dayN, periodStart, daysSinceEnd, ovulationDate, daysSinceOvulation, spottingToday };
 }
 
-// PMS：最近一次 pms_start 在最近经期开始之后（还没被新经期终结），
-// 且距今不超过 pmsMaxDays（防止忘记报经期导致永久 PMS）。
-function pmsActive(events, todayStr, lastPeriodStart, pmsMaxDays) {
-  const starts = events
-    .filter((e) => e.event === 'pms_start' && e.date <= todayStr)
-    .map((e) => e.date)
-    .sort();
-  if (!starts.length) return false;
-  const p = starts[starts.length - 1];
-  if (lastPeriodStart && p <= lastPeriodStart) return false; // 已被这次经期终结
-  return diffDays(p, todayStr) < pmsMaxDays;
-}
-
-// "今天经期第N天" → 反推 period_start 日期
+// "今天经期第N天" → 反推起始日期
 export function backfillStart(todayStr, dayN) {
   return addDays(todayStr, -(dayN - 1));
 }

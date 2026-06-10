@@ -65,7 +65,7 @@ export function sanitizeSymptoms(symptoms, fixedSymptoms) {
     }));
 }
 
-export const CYCLE_EVENTS = ['period_start', 'period_end', 'pms_start', 'spotting', 'ovulation_sign'];
+export const CYCLE_EVENTS = ['period_start', 'period_end', 'pms_start', 'jelly', 'bleed_light', 'bleed_heavy'];
 
 // 规整 cycle：只接受合法事件名 + YYYY-MM-DD
 export function sanitizeCycle(cycle) {
