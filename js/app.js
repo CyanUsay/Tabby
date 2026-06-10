@@ -9,7 +9,7 @@ import * as realDb from './db.js';
 import { parseUtterance } from './ai.js';
 import { renderChecklist, intakeKey } from './checklist.js';
 import { renderSymptoms } from './symptoms.js';
-import { initChat } from './chat.js';
+import { initChat, addBubble } from './chat.js';
 import { makeMockDb, mockParse } from './mock.js';
 
 const MOCK = new URLSearchParams(location.search).has('mock');
@@ -20,14 +20,18 @@ const $ = (id) => document.getElementById(id);
 
 const state = {
   today: appToday(),
-  modeInfo: { mode: 'daily', dayN: null, daysSinceEnd: null, daysSinceOvulation: null },
+  modeInfo: {},
   checklist: [],
   intakeMap: new Map(),
   todaySymptoms: [],
   fixedSymptoms: [],
   cycleEvents: [],
   degraded: false,
+  // 撤销"刚刚那条"用：最近一次聊天确认的快照
+  lastCommit: null, // { prevIntake: [[key,row|null]], symptoms: [name], cycle: {event,date}|null }
 };
+
+const md = (s) => `${Number(s.slice(5, 7))}/${Number(s.slice(8))}`;
 
 /* ---------- 主题 ---------- */
 const THEME_KEY = 'tabby-theme';
@@ -52,6 +56,13 @@ $('theme-toggle').addEventListener('click', () => {
   applyTheme(next);
 });
 applyTheme(currentTheme());
+
+/* ---------- 顶栏日期 ---------- */
+{
+  const DOW = ['日', '一', '二', '三', '四', '五', '六'];
+  const [, m, d] = state.today.split('-').map(Number);
+  $('today-line').textContent = `${m}月${d}日 · 周${DOW[new Date().getDay()]}`;
+}
 
 /* ---------- PWA ---------- */
 if ('serviceWorker' in navigator && !MOCK) {
@@ -84,57 +95,72 @@ function renderCalendar() {
     ev.filter((e) => ['bleed_light', 'bleed_heavy', 'period_start'].includes(e.event)).map((e) => e.date)
   );
   const jellyDates = new Set(ev.filter((e) => e.event === 'jelly').map((e) => e.date));
-  // 每天的状态条颜色（period/pms/null），未来日期不画
-  const barOf = (d) =>
+  const modeOf = (d) =>
     d > state.today ? null : (() => {
       const m = deriveState(ev, d, cycleConfig).mode;
       return m === 'daily' ? null : m;
     })();
 
+  // 同一行内相邻同状态自然连成一条（荧光笔/下划线都按 run 起止圆角）
+  const runEdges = (i, d, has) => {
+    const prev = i % 7 === 0 ? false : has(days[i - 1]);
+    const next = i % 7 === 6 || i + 1 >= days.length ? false : has(days[i + 1]);
+    return { start: !prev, end: !next };
+  };
+
   days.forEach((d, i) => {
-    const bar = barOf(d);
-    const prevBar = i % 7 === 0 ? null : barOf(days[i - 1]); // 跨行不连
-    const nextBar = i % 7 === 6 ? null : i + 1 < days.length ? barOf(days[i + 1]) : null;
+    const mode = modeOf(d);
     const cell = document.createElement('div');
     cell.className =
       'bw-day' + (d === state.today ? ' today' : '') + (d > state.today ? ' future' : '');
+
+    // 荧光笔涂抹（经期/PMS）
+    if (mode) {
+      const hl = document.createElement('span');
+      const e = runEdges(i, d, (x) => modeOf(x) === mode);
+      hl.className = `hl ${mode}${e.start ? ' run-start' : ''}${e.end ? ' run-end' : ''}`;
+      cell.appendChild(hl);
+    }
+
     const num = document.createElement('span');
     num.className = 'num';
     num.textContent = String(Number(d.slice(8)));
     cell.appendChild(num);
-    const barEl = document.createElement('span');
-    barEl.className = 'bar';
-    if (bar) {
-      barEl.classList.add(bar);
-      if (prevBar !== bar) barEl.classList.add('run-start');
-      if (nextBar !== bar) barEl.classList.add('run-end');
+
+    // 下划线（出血/果冻观察）
+    const uls = document.createElement('span');
+    uls.className = 'uls';
+    for (const [set, cls] of [[bleedDates, 'bleed'], [jellyDates, 'jelly']]) {
+      const ul = document.createElement('i');
+      ul.className = 'ul';
+      if (set.has(d)) {
+        const e = runEdges(i, d, (x) => set.has(x));
+        ul.classList.add(cls);
+        if (e.start) ul.classList.add('run-start');
+        if (e.end) ul.classList.add('run-end');
+      }
+      uls.appendChild(ul);
     }
-    cell.appendChild(barEl);
-    const marks = document.createElement('span');
-    marks.className = 'marks';
-    if (bleedDates.has(d)) {
-      const m = document.createElement('i');
-      m.className = 'mk bleed';
-      marks.appendChild(m);
-    }
-    if (jellyDates.has(d)) {
-      const m = document.createElement('i');
-      m.className = 'mk jelly';
-      marks.appendChild(m);
-    }
-    cell.appendChild(marks);
+    cell.appendChild(uls);
     el.appendChild(cell);
   });
 }
 
 /* ---------- 统计 + 打卡按钮状态 ---------- */
 function renderStats() {
-  const { mode, dayN, daysSinceEnd, daysSinceOvulation } = state.modeInfo;
+  const { mode, dayN, daysSinceEnd, daysSinceOvulation, predictedPeriod } = state.modeInfo;
   $('stat-mode').textContent =
     mode === 'period' ? `经期 Day ${dayN}` : mode === 'pms' ? 'PMS 期' : '日常';
-  $('stat-since').textContent = daysSinceEnd === null ? '—' : `${daysSinceEnd} 天`;
-  $('stat-ovulation').textContent =
-    daysSinceOvulation === null ? '—' : daysSinceOvulation === 0 ? '推测今天' : `${daysSinceOvulation} 天`;
+
+  // 经期结束后 / 排卵后：只显示更近的那个
+  if (daysSinceOvulation !== null && (daysSinceEnd === null || daysSinceOvulation <= daysSinceEnd)) {
+    $('stat-recent-label').textContent = '排卵后';
+    $('stat-recent').textContent = daysSinceOvulation === 0 ? '推测今天' : `${daysSinceOvulation} 天`;
+  } else {
+    $('stat-recent-label').textContent = '经期结束后';
+    $('stat-recent').textContent = daysSinceEnd === null ? '—' : `${daysSinceEnd} 天`;
+  }
+  $('stat-predict').textContent = predictedPeriod ? `${md(predictedPeriod)} 前后` : '—';
   $('stat-symptoms').textContent = `${state.todaySymptoms.filter((s) => s.severity > 0).length} 项`;
 
   const total = state.checklist.length;
@@ -182,8 +208,7 @@ function recomputeMode() {
 
 // 周期事件确认后，用一句话反馈推算结果（回溯效果在这里变得可见）
 function cycleFeedback(event) {
-  const { mode, dayN, periodStart, daysSinceOvulation, spottingToday } = state.modeInfo;
-  const md = (s) => `${Number(s.slice(5, 7))}/${Number(s.slice(8))}`;
+  const { mode, dayN, periodStart, daysSinceOvulation, predictedPeriod, spottingToday } = state.modeInfo;
   if (event === 'bleed_heavy' || event === 'period_start') {
     if (mode === 'period') {
       return dayN > 1
@@ -199,13 +224,41 @@ function cycleFeedback(event) {
         : '记好啦喵 ✓';
   }
   if (event === 'jelly') {
+    const tail = predictedPeriod ? `照黄体期推算，月经大约 ${md(predictedPeriod)} 前后来喵` : '';
     return daysSinceOvulation === 0
-      ? '记好啦喵～排卵日暂记今天，连续报告会自动顺延到最后一天喵 ฅ^•ﻌ•^ฅ'
-      : '记好啦喵 ✓';
+      ? `记好啦喵～排卵日暂记今天，连续报告会自动顺延。${tail} ฅ^•ﻌ•^ฅ`
+      : `记好啦喵 ✓ ${tail}`;
   }
   if (event === 'pms_start') return '记好啦喵！已进入 PMS 模式，B6 和镁都加量了，主人请多照顾自己喵 (=ↀωↀ=)';
   if (event === 'period_end') return '记好啦喵！经期结束，清单回到日常，主人辛苦了喵 ฅ^•ﻌ•^ฅ';
   return '记好啦喵 ✓ ฅ^•ﻌ•^ฅ';
+}
+
+/* ---------- 通用确认弹窗（取消打卡等用） ---------- */
+function askConfirm(text, okLabel = '确认') {
+  return new Promise((resolve) => {
+    const layer = document.createElement('div');
+    layer.className = 'modal-layer';
+    const box = document.createElement('div');
+    box.className = 'modal-box';
+    const p = document.createElement('div');
+    p.className = 'modal-text';
+    p.textContent = text;
+    const actions = document.createElement('div');
+    actions.className = 'preview-actions';
+    const no = document.createElement('button');
+    no.className = 'btn ghost';
+    no.textContent = '算了';
+    const yes = document.createElement('button');
+    yes.className = 'btn primary';
+    yes.textContent = okLabel;
+    no.addEventListener('click', () => { layer.remove(); resolve(false); });
+    yes.addEventListener('click', () => { layer.remove(); resolve(true); });
+    actions.append(no, yes);
+    box.append(p, actions);
+    layer.appendChild(box);
+    document.body.appendChild(layer);
+  });
 }
 
 /* ---------- 写库操作 ---------- */
@@ -236,6 +289,11 @@ async function persistIntake(rows, prev) {
 
 async function onToggleIntake(item, nextTaken) {
   if (state.degraded) return;
+  // 取消已打的卡要确认一遍（防误触）
+  if (!nextTaken) {
+    const ok = await askConfirm(`要取消「${item.supplement}」的打卡吗喵？`, '取消打卡');
+    if (!ok) return;
+  }
   const key = intakeKey(item);
   const prev = [[key, state.intakeMap.get(key)]];
   state.intakeMap.set(key, intakeRowOf(item, nextTaken)); // 乐观更新
@@ -246,6 +304,10 @@ async function onToggleIntake(item, nextTaken) {
 
 async function onToggleSlot(items, nextTaken) {
   if (state.degraded) return;
+  if (!nextTaken) {
+    const ok = await askConfirm('要取消这一时段的全部打卡吗喵？', '取消打卡');
+    if (!ok) return;
+  }
   const prev = items.map((i) => [intakeKey(i), state.intakeMap.get(intakeKey(i))]);
   const rows = items.map((i) => intakeRowOf(i, nextTaken));
   rows.forEach((r, idx) => state.intakeMap.set(intakeKey(items[idx]), r));
@@ -265,31 +327,37 @@ async function onLogSymptom(symptom, severity, isCustom) {
   maybePromptPms();
 }
 
-/* ---------- 长按打卡：一键全部完成 ---------- */
+/* ---------- 长按打卡：渐变进度环转满一圈 ---------- */
+const ARC_C = 2 * Math.PI * 50; // 与 SVG r=50 一致
 function initDoneButton() {
   const btn = $('done-btn');
+  const arc = $('done-arc');
+  arc.style.strokeDasharray = ARC_C;
+  arc.style.strokeDashoffset = ARC_C;
   const HOLD_MS = 700;
   let timer = null;
 
-  const cancel = () => {
+  const reset = () => {
     if (timer) clearTimeout(timer);
     timer = null;
-    btn.classList.remove('pressing');
+    arc.style.transition = 'stroke-dashoffset 0.18s ease';
+    arc.style.strokeDashoffset = ARC_C;
   };
 
   btn.addEventListener('pointerdown', (e) => {
     if (state.degraded) return;
     e.preventDefault();
-    btn.classList.add('pressing');
+    arc.style.transition = `stroke-dashoffset ${HOLD_MS}ms linear`;
+    requestAnimationFrame(() => (arc.style.strokeDashoffset = 0));
     timer = setTimeout(async () => {
-      cancel();
+      reset();
       await markAllDone();
       celebrate();
     }, HOLD_MS);
   });
-  btn.addEventListener('pointerup', cancel);
-  btn.addEventListener('pointercancel', cancel);
-  btn.addEventListener('pointerleave', cancel);
+  btn.addEventListener('pointerup', reset);
+  btn.addEventListener('pointercancel', reset);
+  btn.addEventListener('pointerleave', reset);
   btn.addEventListener('contextmenu', (e) => e.preventDefault()); // 防 iOS 长按弹菜单
 }
 
@@ -318,16 +386,49 @@ function celebrate() {
   setTimeout(() => layer.remove(), 2000);
 }
 
+/* ---------- 聊天框小猫：睡着 ⇄ 坐起摇尾巴 ---------- */
+function initChatCat() {
+  const cat = $('chat-cat');
+  const SLEEP = '(=˘ω˘=) zzZ';
+  const FRAMES = ['(=^･ω･^=)∫', '(=^･ω･^=)ʃ'];
+  let wag = null;
+  let frame = 0;
+
+  const sleep = () => {
+    if (wag) clearInterval(wag);
+    wag = null;
+    cat.textContent = SLEEP;
+    cat.classList.remove('awake');
+  };
+  const wake = () => {
+    if (wag) return;
+    cat.classList.add('awake');
+    cat.textContent = FRAMES[0];
+    wag = setInterval(() => {
+      frame = 1 - frame;
+      cat.textContent = FRAMES[frame];
+    }, 450);
+  };
+  cat.addEventListener('click', () => (wag ? sleep() : wake()));
+  return (awake) => (awake ? wake() : setTimeout(sleep, 2500));
+}
+
 /* ---------- PMS 症状询问 ---------- */
 // 记录到典型 PMS 症状且当前是日常模式 → 询问是否进入 PMS（确认才切，不自动）
 function maybePromptPms() {
-  if (state.degraded || state.modeInfo.mode !== 'daily') return;
-  const hit = state.todaySymptoms.some(
-    (s) => s.severity > 0 && PMS_MARKER_SYMPTOMS.includes(s.symptom)
-  );
-  if (!hit) return;
-  if (localStorage.getItem('tabby-pms-dismissed') === state.today) return;
-  if (document.getElementById('pms-ask')) return;
+  const existing = document.getElementById('pms-ask');
+  const hit =
+    !state.degraded &&
+    state.modeInfo.mode === 'daily' &&
+    state.todaySymptoms.some(
+      (s) => s.severity > 0 && PMS_MARKER_SYMPTOMS.includes(s.symptom)
+    ) &&
+    localStorage.getItem('tabby-pms-dismissed') !== state.today;
+  if (!hit) {
+    existing?.remove(); // 条件不再成立（症状删了/已进 PMS）→ 撤掉残留的询问卡
+    return;
+  }
+  if (existing) return;
 
   const card = document.createElement('div');
   card.id = 'pms-ask';
@@ -356,12 +457,7 @@ function maybePromptPms() {
       recomputeMode();
       renderAll();
       card.remove();
-      const bubble = document.createElement('div');
-      bubble.className = 'bubble tabby';
-      bubble.textContent = '已进入 PMS 模式喵！清单加上 B6、镁加到 300mg，主人要好好照顾自己 (=ↀωↀ=)';
-      const log = $('chat-log');
-      log.appendChild(bubble);
-      log.scrollTop = log.scrollHeight;
+      addBubble($('chat-log'), 'tabby', '已进入 PMS 模式喵！清单加上 B6、镁加到 300mg，主人要好好照顾自己 (=ↀωↀ=)');
     } catch (e) {
       yes.disabled = false;
       console.error(e);
@@ -369,38 +465,83 @@ function maybePromptPms() {
   });
   actions.append(later, yes);
   card.append(text, actions);
-  const log = $('chat-log');
-  log.appendChild(card);
-  log.scrollTop = log.scrollHeight;
+  $('chat-log').appendChild(card);
+}
+
+/* ---------- 删除/撤销 ---------- */
+async function executeRemove(remove) {
+  if (remove.what === 'symptoms_today') {
+    await db.deleteSymptomsByDate(state.today);
+    return '今天的症状记录都删掉了喵 ฅ(•ㅅ•)ฅ';
+  }
+  if (remove.what === 'cycle_today') {
+    await db.deleteCycleEventsByDate(state.today);
+    return '今天的周期记录删掉了喵，状态重新算过了 ฅ(•ㅅ•)ฅ';
+  }
+  // what === 'last'：撤销最近一次聊天确认
+  const last = state.lastCommit;
+  if (!last) return '咦…Tabby 不记得刚才记过什么了喵，要不直接说删哪条？(=･ｪ･=?';
+  if (last.cycle) await db.deleteCycleEvent(last.cycle);
+  for (const name of last.symptoms) await db.deleteSymptom(state.today, name);
+  if (last.prevIntake.length) {
+    const rows = last.prevIntake.map(([key, row]) => {
+      if (row) return row;
+      const [supplement, slot] = key.split('|');
+      const item = state.checklist.find((i) => i.supplement === supplement && i.slot === slot);
+      return intakeRowOf(item ?? { supplement, slot, dose: '' }, false);
+    });
+    await db.upsertIntake(rows);
+  }
+  state.lastCommit = null;
+  return '撤销好了喵，就当刚才什么都没发生 (=^･ω･^=)';
 }
 
 /* ---------- 预览卡确认后的统一落库（chat.js 回调） ---------- */
 async function commitDraft(draft) {
+  let removeMsg = null;
+  if (draft.remove) {
+    removeMsg = await executeRemove(draft.remove);
+  }
+
+  const snapshot = { prevIntake: [], symptoms: [], cycle: null };
   if (draft.intake.length) {
+    snapshot.prevIntake = draft.intake.map((i) => {
+      const key = `${i.supplement}|${i.slot}`;
+      return [key, state.intakeMap.get(key) ?? null];
+    });
     await db.upsertIntake(
       draft.intake.map((i) => ({ ...i, date: state.today, mode: state.modeInfo.mode }))
     );
   }
   if (draft.symptoms.length) {
+    snapshot.symptoms = draft.symptoms.map((s) => s.symptom);
     await db.upsertSymptoms(draft.symptoms.map((s) => ({ ...s, date: state.today })));
     for (const s of draft.symptoms.filter((x) => x.is_custom)) {
       await db.bumpSymptomCatalog(s.symptom).catch(() => {});
     }
   }
   if (draft.cycle) {
+    snapshot.cycle = draft.cycle;
     await db.insertCycleEvent(draft.cycle);
-    // 状态可能变了 → 重拉事件、重算清单
-    state.cycleEvents = await db.fetchCycleEvents();
-    recomputeMode();
   }
-  const [intakeRows, symptomRows] = await Promise.all([
+  if (draft.intake.length || draft.symptoms.length || draft.cycle) {
+    state.lastCommit = snapshot;
+  }
+
+  // 统一重拉重算（删除/周期事件都可能改变状态）
+  const [events, intakeRows, symptomRows] = await Promise.all([
+    db.fetchCycleEvents(),
     db.fetchTodayIntake(state.today),
     db.fetchTodaySymptoms(state.today),
   ]);
+  state.cycleEvents = events;
   state.intakeMap = new Map(intakeRows.map((r) => [intakeKey(r), r]));
   state.todaySymptoms = symptomRows;
+  recomputeMode();
   renderAll();
   maybePromptPms();
+
+  if (removeMsg) return removeMsg;
   return draft.cycle ? cycleFeedback(draft.cycle.event) : null;
 }
 
@@ -421,6 +562,7 @@ async function boot() {
   renderAll();
   initDoneButton();
   initSymptomsToggle();
+  const onWake = initChatCat();
   try {
     const [events, fixed, intakeRows, symptomRows] = await Promise.all([
       db.fetchCycleEvents(),
@@ -453,6 +595,7 @@ async function boot() {
     }),
     parse,
     onCommit: commitDraft,
+    onWake,
   });
 }
 

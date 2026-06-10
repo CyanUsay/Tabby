@@ -211,3 +211,23 @@ test('不在应服清单内的 intake 项被丢弃', () => {
 });
 
 console.log(`\n${passed} tests passed`);
+
+console.log('cycle.js（排卵→经期预测）');
+test('排卵落定后给出预测经期 = 排卵 + 14', () => {
+  const events = [
+    { event: 'jelly', date: '2026-06-06' },
+    { event: 'jelly', date: '2026-06-07' },
+  ];
+  const r = deriveState(events, '2026-06-09', cfg);
+  assert.equal(r.ovulationDate, '2026-06-07');
+  assert.equal(r.predictedPeriod, '2026-06-21');
+});
+test('经期来了之后预测清空', () => {
+  const events = [
+    { event: 'jelly', date: '2026-06-01' },
+    { event: 'bleed_heavy', date: '2026-06-08' },
+  ];
+  assert.equal(deriveState(events, '2026-06-09', cfg).predictedPeriod, null);
+});
+
+console.log(`\n共 ${passed} tests passed`);

@@ -6,15 +6,15 @@ import { getChecklist } from './protocol.js';
 export function makeMockDb() {
   const intake = new Map(); // key: date|supplement|slot
   const symptoms = new Map(); // key: date|symptom
-  // 演示用历史：让双周日历能看到状态条和标记点
-  const cycleEvents = [
+  // 演示用历史：让双周日历能看到荧光笔和下划线
+  let cycleEvents = [
     { event: 'period_start', date: '2026-05-20' },
     { event: 'bleed_light', date: '2026-06-02' },
     { event: 'jelly', date: '2026-06-05' },
     { event: 'jelly', date: '2026-06-06' },
     { event: 'jelly', date: '2026-06-07' },
   ];
-  const catalog = ['胸胀', '噩梦', '情绪低落', '精力', '头痛', '腹痛', '发热感'];
+  const catalog = ['胸胀', '睡眠障碍', '情绪低落', '精力', '头痛', '腹痛', '发热感'];
 
   return {
     fetchTodayIntake: async (date) =>
@@ -36,32 +36,67 @@ export function makeMockDb() {
     fetchCycleEvents: async () => [...cycleEvents],
     fetchFixedSymptoms: async () => catalog.map((name) => ({ name })),
     bumpSymptomCatalog: async () => {},
+    deleteCycleEvent: async ({ event, date }) => {
+      cycleEvents = cycleEvents.filter((x) => !(x.event === event && x.date === date));
+    },
+    deleteCycleEventsByDate: async (date) => {
+      cycleEvents = cycleEvents.filter((x) => x.date !== date);
+    },
+    deleteSymptom: async (date, symptom) => {
+      symptoms.delete(`${date}|${symptom}`);
+    },
+    deleteSymptomsByDate: async (date) => {
+      for (const k of [...symptoms.keys()]) if (k.startsWith(`${date}|`)) symptoms.delete(k);
+    },
   };
 }
 
-// 模拟 AI：识别几句典型话术，足够走通预览/clarify/error 全分支
+// 模拟 AI：识别几句典型话术，足够走通预览/clarify/error/撤销 全分支
 export function mockParse(text, context) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       if (text.includes('崩溃')) return reject(new Error('mock failure'));
       if (text.includes('不知道')) {
-        return resolve({ intake: [], symptoms: [], cycle: null, clarify: '主人是想记补剂还是症状呀喵？ฅ(•ㅅ•)ฅ' });
+        return resolve({ intake: [], symptoms: [], cycle: null, remove: null, clarify: '主人是想记补剂还是症状呀喵？ฅ(•ㅅ•)ฅ' });
       }
       const checklist = context.checklist || getChecklist(context.mode);
-      const result = { intake: [], symptoms: [], cycle: null, clarify: null };
-      if (text.includes('都吃了')) {
+      const result = { intake: [], symptoms: [], cycle: null, remove: null, clarify: null };
+
+      // 撤销/删除
+      if (text.includes('删掉') || text.includes('撤销')) {
+        if (text.includes('症状')) result.remove = { what: 'symptoms_today' };
+        else if (text.includes('周期') || text.includes('经期')) result.remove = { what: 'cycle_today' };
+        else result.remove = { what: 'last' };
+        return resolve(result);
+      }
+      if (text.includes('不是经期')) {
+        result.remove = { what: 'cycle_today' };
+        return resolve(result);
+      }
+
+      // 局部打卡："晚饭的吃了" / "刚吃了镁"
+      if (text.includes('晚饭') && text.includes('吃')) {
+        result.intake = checklist
+          .filter((c) => c.slot === 'dinner')
+          .map((c) => ({ supplement: c.supplement, slot: c.slot, taken: true }));
+      } else if (text.includes('吃了镁') || text.includes('刚吃了镁')) {
+        result.intake = checklist
+          .filter((c) => c.supplement === '甘氨酸镁')
+          .map((c) => ({ supplement: c.supplement, slot: c.slot, taken: true }));
+      } else if (text.includes('都吃了')) {
         result.intake = checklist.map((c) => ({ supplement: c.supplement, slot: c.slot, taken: true }));
+        if (text.includes('漏了VC') || text.includes('没吃VC')) {
+          result.intake = result.intake.map((i) => ({ ...i, taken: i.supplement !== 'VC' }));
+        }
       }
-      if (text.includes('漏了VC') || text.includes('没吃VC')) {
-        result.intake = checklist.map((c) => ({
-          supplement: c.supplement,
-          slot: c.slot,
-          taken: c.supplement !== 'VC',
-        }));
-      }
+
       if (text.includes('胸胀')) result.symptoms.push({ symptom: '胸胀', severity: 2, is_custom: false });
-      if (text.includes('情绪')) result.symptoms.push({ symptom: '情绪低落', severity: 2, is_custom: false });
+      if (text.includes('头痛')) result.symptoms.push({ symptom: '头痛', severity: 2, is_custom: false });
+      if (text.includes('失眠') || text.includes('噩梦') || text.includes('吓醒')) {
+        result.symptoms.push({ symptom: '睡眠障碍', severity: 2, is_custom: false });
+      }
       if (text.includes('膝盖疼')) result.symptoms.push({ symptom: '膝盖疼', severity: 1, is_custom: true });
+
       if (text.includes('例假') || text.includes('月经') || text.includes('量多')) {
         result.cycle = { event: 'bleed_heavy', date: context.date };
       }

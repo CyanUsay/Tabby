@@ -1,16 +1,27 @@
 // 聊天流程状态机：输入 → loading → 预览卡（可直接修改）→ 确认写库。
 // AI 只做翻译，落库前必须经过这张预览卡（spec §5.3，不可省）。
 
-import { filterIntakeToChecklist, sanitizeSymptoms, sanitizeCycle, AiError } from './ai.js';
+import {
+  filterIntakeToChecklist,
+  sanitizeSymptoms,
+  sanitizeCycle,
+  sanitizeRemove,
+  AiError,
+} from './ai.js';
 import { severityLabel } from './symptoms.js';
 
 const SLOT_SHORT = { wake: '醒', lunch: '午', dinner: '晚', bedtime: '睡前' };
+const REMOVE_LABELS = {
+  last: '撤销刚才记的那条',
+  cycle_today: '删掉今天的周期记录',
+  symptoms_today: '删掉今天记的全部症状',
+};
 
-// opts: { logEl, input, sendBtn, getContext, parse, onCommit }
+// opts: { logEl, input, sendBtn, getContext, parse, onCommit, onWake }
 //  getContext() → { date, mode, checklist, fixedSymptoms }
-//  parse(text, context) → Promise<{intake, symptoms, cycle, clarify}>
-//  onCommit({intake, symptoms, cycle}) → Promise（由 app 负责写库与刷新）
-export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit }) {
+//  parse(text, context) → Promise<{intake, symptoms, cycle, remove, clarify}>
+//  onCommit(draft) → Promise<string|null>（由 app 负责写库与刷新，可返回反馈语）
+export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, onWake }) {
   let busy = false;
 
   async function send() {
@@ -30,8 +41,8 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit })
       thinking.remove();
       const msg =
         e instanceof AiError && e.kind === 'timeout'
-          ? '呜…等不到 AI 回话了喵，主人先在下面手动勾选吧 (=；ω；=)'
-          : '呜…AI 暂时联系不上喵，主人先在下面手动勾选吧 (=；ω；=)';
+          ? '呜…等不到 AI 回话了喵，主人先手动勾选吧 (=；ω；=)'
+          : '呜…AI 暂时联系不上喵，主人先手动勾选吧 (=；ω；=)';
       addBubble(logEl, 'tabby', msg);
       done();
       return;
@@ -44,18 +55,19 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit })
       return;
     }
 
-    // 落库前的安全规整：intake 白名单过滤、symptoms/cycle 规整
+    // 落库前的安全规整：intake 白名单过滤、symptoms/cycle/remove 规整
     const draft = {
       intake: filterIntakeToChecklist(result.intake, context.checklist),
       symptoms: sanitizeSymptoms(result.symptoms, context.fixedSymptoms),
       cycle: sanitizeCycle(result.cycle),
+      remove: sanitizeRemove(result.remove),
     };
-    if (!draft.intake.length && !draft.symptoms.length && !draft.cycle) {
+    if (!draft.intake.length && !draft.symptoms.length && !draft.cycle && !draft.remove) {
       addBubble(logEl, 'tabby', '没听懂主人想记什么喵…再说具体一点好不好 ฅ(•ㅅ•)ฅ');
       done();
       return;
     }
-    renderPreviewCard(draft);
+    renderPreviewCard(draft, context);
     done();
   }
 
@@ -65,21 +77,46 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit })
     scrollToBottom();
   }
 
-  function renderPreviewCard(draft) {
+  function renderPreviewCard(draft, context) {
     const card = document.createElement('div');
     card.className = 'preview-card';
     const hint = document.createElement('div');
     hint.className = 'hint';
-    hint.textContent = '确认一下：点补剂行切换吃没吃，点症状调程度，✕ 删除';
+    hint.textContent = '确认一下喵：点条目可修改，✕ 删除';
     card.appendChild(hint);
     rebuild();
     logEl.appendChild(card);
     scrollToBottom();
 
-    function rebuild() {
-      card.querySelectorAll('.section-title, .preview-row, .preview-actions').forEach((n) => n.remove());
+    // "今天都吃了"= 覆盖全清单且全勾 → 折叠成一行摘要，不列整个 list
+    function isFullDefault() {
+      return (
+        draft.intake.length > 0 &&
+        draft.intake.length === context.checklist.length &&
+        draft.intake.every((i) => i.taken)
+      );
+    }
 
-      if (draft.intake.length) {
+    function rebuild() {
+      card
+        .querySelectorAll('.section-title, .preview-row, .preview-actions, .preview-summary')
+        .forEach((n) => n.remove());
+
+      if (draft.remove) {
+        card.appendChild(sectionTitle('删除'));
+        const row = document.createElement('div');
+        row.className = 'preview-row';
+        row.innerHTML = `<span class="mark off-mark">✕</span><span class="pname"></span>`;
+        row.querySelector('.pname').textContent = REMOVE_LABELS[draft.remove.what];
+        card.appendChild(row);
+      }
+
+      if (isFullDefault()) {
+        const sum = document.createElement('div');
+        sum.className = 'preview-summary';
+        sum.textContent = `✓ 今日清单全部完成（${draft.intake.length} 项）`;
+        card.appendChild(sum);
+      } else if (draft.intake.length) {
         card.appendChild(sectionTitle('补剂'));
         draft.intake.forEach((item) => {
           const row = document.createElement('button');
@@ -97,21 +134,33 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit })
       }
 
       if (draft.symptoms.length) {
-        card.appendChild(sectionTitle('症状'));
+        card.appendChild(sectionTitle('症状 · 选程度'));
         draft.symptoms.forEach((s, idx) => {
-          const row = document.createElement('button');
-          row.className = 'preview-row';
-          row.innerHTML = `<span class="mark">♥</span><span class="pname"></span><span class="meta"></span><span class="remove">✕</span>`;
-          row.querySelector('.pname').textContent = s.symptom + (s.is_custom ? '（新）' : '');
-          row.querySelector('.meta').textContent = severityLabel(s.severity);
-          row.addEventListener('click', (e) => {
-            if (e.target.classList.contains('remove')) {
-              draft.symptoms.splice(idx, 1);
-            } else {
-              s.severity = (s.severity + 1) % 4; // 点击循环 无→轻→中→重
-            }
+          const row = document.createElement('div');
+          row.className = 'preview-row sym';
+          const name = document.createElement('span');
+          name.className = 'pname';
+          name.textContent = s.symptom + (s.is_custom ? '（新）' : '');
+          const seg = document.createElement('span');
+          seg.className = 'seg';
+          for (const sev of [1, 2, 3]) {
+            const b = document.createElement('button');
+            b.className = `seg-btn sev-${sev}${s.severity === sev ? ' on' : ''}`;
+            b.textContent = severityLabel(sev);
+            b.addEventListener('click', () => {
+              s.severity = sev;
+              rebuild();
+            });
+            seg.appendChild(b);
+          }
+          const rm = document.createElement('button');
+          rm.className = 'remove';
+          rm.textContent = '✕';
+          rm.addEventListener('click', () => {
+            draft.symptoms.splice(idx, 1);
             rebuild();
           });
+          row.append(name, seg, rm);
           card.appendChild(row);
         });
       }
@@ -148,7 +197,11 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit })
       cancel.addEventListener('click', () => card.remove());
       const confirm = document.createElement('button');
       confirm.className = 'btn primary';
-      confirm.textContent = '确认记录';
+      confirm.textContent = draft.remove
+        ? '确认删除'
+        : isFullDefault()
+          ? '确认按默认记录'
+          : '确认记录';
       confirm.addEventListener('click', async () => {
         confirm.disabled = true;
         confirm.textContent = '记录中…';
@@ -178,20 +231,24 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit })
   }
 
   function scrollToBottom() {
-    logEl.scrollTop = logEl.scrollHeight; // 聊天区在页面中部，滚自己不滚页面
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   }
 
   sendBtn.addEventListener('click', send);
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') send();
   });
+  if (onWake) {
+    input.addEventListener('focus', () => onWake(true));
+    input.addEventListener('blur', () => onWake(false));
+  }
 }
 
-function addBubble(logEl, cls, text) {
+export function addBubble(logEl, cls, text) {
   const el = document.createElement('div');
   el.className = `bubble ${cls}`;
   el.textContent = text;
   logEl.appendChild(el);
-  logEl.scrollTop = logEl.scrollHeight;
+  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   return el;
 }
