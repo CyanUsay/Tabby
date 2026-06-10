@@ -64,9 +64,25 @@ applyTheme(currentTheme());
   $('today-line').textContent = `${m}月${d}日 · 周${DOW[new Date().getDay()]}`;
 }
 
-/* ---------- PWA ---------- */
+/* ---------- PWA：注册 + 自动更新 ----------
+   每次打开/回到前台都主动检查新版本；新 SW 接管时自动刷新一次页面，
+   用户无需"关掉重开两次"。 */
 if ('serviceWorker' in navigator && !MOCK) {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
+  navigator.serviceWorker
+    .register('./sw.js')
+    .then((reg) => {
+      reg.update().catch(() => {});
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) reg.update().catch(() => {});
+      });
+    })
+    .catch(() => {});
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloaded) return; // 防刷新循环
+    reloaded = true;
+    location.reload();
+  });
 }
 
 const isStandalone =
