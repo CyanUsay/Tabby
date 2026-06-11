@@ -43,6 +43,7 @@ function runs(dateList, maxGap) {
 // 返回 {
 //   mode: 'daily'|'pms'|'period',
 //   dayN,                 经期第几天（period 时，按判定后的 Day1 算）
+//   pmsDayN,              PMS 第几天（pms 时，Day1 = 报告当天）
 //   periodStart,          当前/最近一次经期的 Day1，无则 null
 //   daysSinceEnd,         距最近一次经期结束的天数（经期中或无记录时 null）
 //   ovulationDate,        排卵日 = 果冻段末+1（黏液消退日）；段进行中/已消费 null
@@ -160,12 +161,16 @@ export function deriveState(events, todayStr, cfg) {
   const suspectBleed = suspects[suspects.length - 1] ?? null;
 
   // ---- PMS：报告驱动，经期开始即终结，pmsMaxDays 兜底 ----
+  let pmsDayN = null;
   if (mode !== 'period') {
     const pmsStarts = dates(events, todayStr, 'pms_start');
     if (pmsStarts.length) {
       const p = pmsStarts[pmsStarts.length - 1];
       const terminated = periodStart !== null && p <= periodStart;
-      if (!terminated && diffDays(p, todayStr) < pmsMaxDays) mode = 'pms';
+      if (!terminated && diffDays(p, todayStr) < pmsMaxDays) {
+        mode = 'pms';
+        pmsDayN = diffDays(p, todayStr) + 1; // PMS Day 1 = 报告当天
+      }
     }
   }
 
@@ -192,7 +197,7 @@ export function deriveState(events, todayStr, cfg) {
   }
 
   return {
-    mode, dayN, periodStart, daysSinceEnd,
+    mode, dayN, pmsDayN, periodStart, daysSinceEnd,
     ovulationDate, ovulationPending, daysSinceOvulation, predictedPeriod,
     spottingToday, suspectBleed, phase,
   };

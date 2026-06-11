@@ -145,6 +145,13 @@ function renderCalendar() {
     num.textContent = String(Number(d.slice(8)));
     cell.appendChild(num);
 
+    // 排卵日（推算落定后）：日期下橙黄色小圈圈
+    if (d === state.modeInfo.ovulationDate) {
+      const ring = document.createElement('span');
+      ring.className = 'ovu-mark';
+      cell.appendChild(ring);
+    }
+
     // 下划线（出血/果冻观察）：默认同一水平面，同一天两者都有才分上下
     const uls = document.createElement('span');
     uls.className = 'uls';
@@ -165,15 +172,18 @@ function renderCalendar() {
   });
 }
 
-/* ---------- 顶栏状态胶囊 ---------- */
+/* ---------- 顶栏状态胶囊 ----------
+   只在经期/PMS/黄体期显示（正常、排卵期不占顶栏；排卵看日历果冻线和小圈圈） */
 function renderTopbarMode() {
-  const { mode, dayN, phase } = state.modeInfo;
-  $('topbar-mode').textContent =
-    mode === 'period' ? `经期 Day ${dayN}`
-    : mode === 'pms' ? 'PMS 期'
-    : phase === 'ovulation' ? '排卵期'
-    : phase === 'luteal' ? '黄体期'
-    : '正常';
+  const { mode, dayN, pmsDayN, daysSinceOvulation, phase } = state.modeInfo;
+  const chip = $('topbar-mode');
+  const label =
+    mode === 'period' ? `🩸 经期 Day ${dayN}`
+    : mode === 'pms' ? `💜 PMS Day ${pmsDayN}`
+    : phase === 'luteal' ? `🔅 黄体期 Day ${daysSinceOvulation}`
+    : null;
+  chip.hidden = !label;
+  chip.textContent = label ?? '';
 }
 
 /* ---------- 统计 + 打卡按钮状态 ---------- */

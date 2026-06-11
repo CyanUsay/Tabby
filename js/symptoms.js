@@ -12,13 +12,13 @@ export function severityLabel(n) {
 
 // 症状严重度三档（统计位 & PMS 色带浓度用）：
 //   平稳 = 没记症状，或只记 1 项且程度为轻
-//   轻   = 记 2~3 项且都是轻
-//   明显 = 任何一项程度到"中"以上，或记了 ≥4 项（无论程度）
+//   轻   = 记 2~4 项且都是轻
+//   明显 = 任何一项程度到"中"以上，或记了 ≥5 项（无论程度）
 const LEVEL_LABELS = { calm: '平稳', mild: '轻', marked: '明显' };
 
 export function severityLevel(symptoms) {
   const logged = (symptoms ?? []).filter((s) => s.severity > 0);
-  if (logged.length >= 4 || logged.some((s) => s.severity >= 2)) return 'marked';
+  if (logged.length >= 5 || logged.some((s) => s.severity >= 2)) return 'marked';
   if (logged.length > 1) return 'mild';
   return 'calm';
 }
