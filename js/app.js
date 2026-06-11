@@ -146,13 +146,15 @@ function renderCalendar() {
     // 下划线（出血/果冻观察）：默认同一水平面，同一天两者都有才分上下
     const uls = document.createElement('span');
     uls.className = 'uls';
+    // 经期色带覆盖不正出血：经期日不画出血下划线
+    const spotHas = (x) => bleedDates.has(x) && modeOf(x) !== 'period';
     const dayMarks = [
-      ...(bleedDates.has(d) ? [['bleed', bleedDates]] : []),
-      ...(jellyDates.has(d) ? [['jelly', jellyDates]] : []),
+      ...(spotHas(d) ? [['bleed', spotHas]] : []),
+      ...(jellyDates.has(d) ? [['jelly', (x) => jellyDates.has(x)]] : []),
     ];
-    for (const [cls, set] of dayMarks) {
+    for (const [cls, has] of dayMarks) {
       const ul = document.createElement('i');
-      const e = runEdges(i, d, (x) => set.has(x));
+      const e = runEdges(i, d, has);
       ul.className = `ul ${cls}${e.start ? ' run-start' : ''}${e.end ? ' run-end' : ''}`;
       uls.appendChild(ul);
     }
@@ -163,9 +165,13 @@ function renderCalendar() {
 
 /* ---------- 统计 + 打卡按钮状态 ---------- */
 function renderStats() {
-  const { mode, dayN, daysSinceEnd, daysSinceOvulation, predictedPeriod } = state.modeInfo;
+  const { mode, dayN, daysSinceEnd, daysSinceOvulation, predictedPeriod, phase } = state.modeInfo;
   $('stat-mode').textContent =
-    mode === 'period' ? `经期 Day ${dayN}` : mode === 'pms' ? 'PMS 期' : '日常';
+    mode === 'period' ? `经期 Day ${dayN}`
+    : mode === 'pms' ? 'PMS 期'
+    : phase === 'ovulation' ? '排卵期'
+    : phase === 'luteal' ? '黄体期'
+    : '正常';
 
   // 经期结束后 / 排卵后：只显示更近的那个
   if (daysSinceOvulation !== null && (daysSinceEnd === null || daysSinceOvulation <= daysSinceEnd)) {
@@ -223,8 +229,17 @@ function recomputeMode() {
 }
 
 // 周期事件确认后，用一句话反馈推算结果（回溯效果在这里变得可见）
-function cycleFeedback(event) {
-  const { mode, dayN, periodStart, daysSinceOvulation, predictedPeriod, spottingToday } = state.modeInfo;
+function cycleFeedback(cycles) {
+  const { mode, dayN, periodStart, daysSinceOvulation, predictedPeriod, spottingToday, phase } = state.modeInfo;
+  if (cycles.length > 1) {
+    const tail =
+      mode === 'period' ? `现在是经期 Day ${dayN}（从 ${md(periodStart)} 起算）`
+      : phase === 'ovulation' ? '现在是排卵期'
+      : phase === 'luteal' ? '现在是黄体期'
+      : '';
+    return `补记好了喵！${cycles.length} 条都记上了，状态重新算过。${tail} (=^･ω･^=)`;
+  }
+  const event = cycles[0].event;
   if (event === 'bleed_heavy' || event === 'period_start') {
     if (mode === 'period') {
       return dayN > 1
@@ -516,7 +531,7 @@ async function executeRemove(remove) {
   // what === 'last'：撤销最近一次聊天确认
   const last = state.lastCommit;
   if (!last) return '咦…Tabby 不记得刚才记过什么了喵，要不直接说删哪条？(=･ｪ･=?';
-  if (last.cycle) await db.deleteCycleEvent(last.cycle);
+  for (const c of last.cycles ?? []) await db.deleteCycleEvent(c);
   for (const name of last.symptoms) await db.deleteSymptom(state.today, name);
   if (last.prevIntake.length) {
     const rows = last.prevIntake.map(([key, row]) => {
@@ -538,7 +553,7 @@ async function commitDraft(draft) {
     removeMsg = await executeRemove(draft.remove);
   }
 
-  const snapshot = { prevIntake: [], symptoms: [], cycle: null };
+  const snapshot = { prevIntake: [], symptoms: [], cycles: [] };
   if (draft.intake.length) {
     snapshot.prevIntake = draft.intake.map((i) => {
       const key = `${i.supplement}|${i.slot}`;
@@ -555,11 +570,11 @@ async function commitDraft(draft) {
       await db.bumpSymptomCatalog(s.symptom).catch(() => {});
     }
   }
-  if (draft.cycle) {
-    snapshot.cycle = draft.cycle;
-    await db.insertCycleEvent(draft.cycle);
+  for (const c of draft.cycles) {
+    snapshot.cycles.push(c);
+    await db.insertCycleEvent(c);
   }
-  if (draft.intake.length || draft.symptoms.length || draft.cycle) {
+  if (draft.intake.length || draft.symptoms.length || draft.cycles.length) {
     state.lastCommit = snapshot;
   }
 
@@ -577,7 +592,7 @@ async function commitDraft(draft) {
   maybePromptPms();
 
   if (removeMsg) return removeMsg;
-  return draft.cycle ? cycleFeedback(draft.cycle.event) : null;
+  return draft.cycles.length ? cycleFeedback(draft.cycles) : null;
 }
 
 /* ---------- 症状卡收起/展开 ---------- */

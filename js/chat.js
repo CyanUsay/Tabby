@@ -4,7 +4,7 @@
 import {
   filterIntakeToChecklist,
   sanitizeSymptoms,
-  sanitizeCycle,
+  sanitizeCycles,
   sanitizeRemove,
   AiError,
 } from './ai.js';
@@ -23,6 +23,12 @@ const REMOVE_LABELS = {
 //  onCommit(draft) → Promise<string|null>（由 app 负责写库与刷新，可返回反馈语）
 export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, onWake }) {
   let busy = false;
+  const history = []; // 最近几轮对话，让"都有"这类省略表达能接上文
+
+  function remember(role, content) {
+    history.push({ role, content });
+    while (history.length > 6) history.shift();
+  }
 
   async function send() {
     const text = input.value.trim();
@@ -33,7 +39,8 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, o
     addBubble(logEl, 'user', text);
     const thinking = addBubble(logEl, 'tabby thinking', 'Tabby 想想喵');
 
-    const context = getContext();
+    const context = { ...getContext(), history: [...history] };
+    remember('user', text);
     let result;
     try {
       result = await parse(text, context);
@@ -50,6 +57,7 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, o
     thinking.remove();
 
     if (result.clarify) {
+      remember('assistant', result.clarify);
       addBubble(logEl, 'tabby', result.clarify);
       done();
       return;
@@ -59,10 +67,10 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, o
     const draft = {
       intake: filterIntakeToChecklist(result.intake, context.checklist),
       symptoms: sanitizeSymptoms(result.symptoms, context.fixedSymptoms),
-      cycle: sanitizeCycle(result.cycle),
+      cycles: sanitizeCycles(result.cycle),
       remove: sanitizeRemove(result.remove),
     };
-    if (!draft.intake.length && !draft.symptoms.length && !draft.cycle && !draft.remove) {
+    if (!draft.intake.length && !draft.symptoms.length && !draft.cycles.length && !draft.remove) {
       addBubble(logEl, 'tabby', '没听懂主人想记什么喵…再说具体一点好不好 ฅ(•ㅅ•)ฅ');
       done();
       return;
@@ -80,10 +88,6 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, o
   function renderPreviewCard(draft, context) {
     const card = document.createElement('div');
     card.className = 'preview-card';
-    const hint = document.createElement('div');
-    hint.className = 'hint';
-    hint.textContent = '确认一下喵：点条目可修改，✕ 删除';
-    card.appendChild(hint);
     rebuild();
     logEl.appendChild(card);
     scrollToBottom();
@@ -165,11 +169,8 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, o
         });
       }
 
-      if (draft.cycle) {
+      if (draft.cycles.length) {
         card.appendChild(sectionTitle('周期'));
-        const row = document.createElement('button');
-        row.className = 'preview-row';
-        row.innerHTML = `<span class="mark">☾</span><span class="pname"></span><span class="remove">✕</span>`;
         const EVENT_LABELS = {
           period_start: '经期开始',
           period_end: '经期结束',
@@ -178,15 +179,19 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, o
           bleed_light: '少量出血',
           bleed_heavy: '经期血量出血',
         };
-        row.querySelector('.pname').textContent =
-          `${EVENT_LABELS[draft.cycle.event]} · ${draft.cycle.date}`;
-        row.addEventListener('click', (e) => {
-          if (e.target.classList.contains('remove')) {
-            draft.cycle = null;
-            rebuild();
-          }
+        draft.cycles.forEach((c, idx) => {
+          const row = document.createElement('button');
+          row.className = 'preview-row';
+          row.innerHTML = `<span class="mark">☾</span><span class="pname"></span><span class="remove">✕</span>`;
+          row.querySelector('.pname').textContent = `${EVENT_LABELS[c.event]} · ${c.date}`;
+          row.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove')) {
+              draft.cycles.splice(idx, 1);
+              rebuild();
+            }
+          });
+          card.appendChild(row);
         });
-        card.appendChild(row);
       }
 
       const actions = document.createElement('div');

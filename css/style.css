@@ -379,9 +379,14 @@ header.topbar {
   stroke: #e88aa0; /* 完成态圆环 = 睡醒时段的粉 */
 }
 
-/* 完成态：光从粉色圆环本体向外辐射 */
-.done-btn.done .done-ring {
-  filter: drop-shadow(0 0 6px #e88aa0) drop-shadow(0 0 14px rgba(232, 138, 160, 0.6));
+/* 完成态：光从粉色圆环的外缘向外辐射（外阴影被裁掉内侧，内圈不发光） */
+.done-btn.done::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: 50%;
+  box-shadow: 0 0 7px #e88aa0, 0 0 18px rgba(232, 138, 160, 0.65);
+  pointer-events: none;
 }
 
 .done-label {
@@ -926,7 +931,7 @@ header.topbar {
 }
 
 .bubble.user {
-  background: var(--divider); /* 与分割线/未激活小猫同色 */
+  background: color-mix(in srgb, var(--accent) 38%, transparent);
   color: var(--text);
   margin-left: auto;
   border-bottom-right-radius: 6px;

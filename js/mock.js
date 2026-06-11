@@ -106,11 +106,21 @@ export function mockParse(text, context) {
       if (text.toLowerCase().includes('pms')) {
         result.cycle = { event: 'pms_start', date: context.date };
       }
-      if (text.includes('有点血') || text.includes('见红')) {
+      if (text.includes('有点血') || text.includes('见红') || text.includes('少量出血')) {
         result.cycle = { event: 'bleed_light', date: context.date };
       }
+      if (text.includes('昨天') && text.includes('血')) {
+        const d = new Date(context.date); d.setDate(d.getDate() - 1);
+        const y = d.toISOString().slice(0, 10);
+        result.cycle = [{ event: 'bleed_light', date: y }, { event: 'bleed_light', date: context.date }];
+      }
       if (text.includes('果冻') || text.includes('蛋清') || text.includes('拉丝')) {
-        result.cycle = { event: 'jelly', date: context.date };
+        if (text.includes('这两天') || text.includes('昨天')) {
+          const d = new Date(context.date); d.setDate(d.getDate() - 1);
+          result.cycle = [{ event: 'jelly', date: d.toISOString().slice(0, 10) }, { event: 'jelly', date: context.date }];
+        } else {
+          result.cycle = { event: 'jelly', date: context.date };
+        }
       }
       resolve(result);
     }, 600);
