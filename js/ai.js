@@ -94,6 +94,13 @@ export function removeRequiresIntent(remove, userText) {
   return /[删撤错]|清除|清空|取消|去掉|不算|移除|抹掉|划掉/.test(userText) ? remove : null;
 }
 
+// 已确认过的记录不再进预览：cycle_event 有 (event,date) 唯一约束，重复确认是
+// 无效操作，只会让预览卡看起来在"重复询问"（模型常把上文聊过的条目再带出来）。
+export function dropExistingCycles(cycles, existing) {
+  const have = new Set((existing ?? []).map((e) => `${e.event}|${e.date}`));
+  return cycles.filter((c) => !have.has(`${c.event}|${c.date}`));
+}
+
 // 模型偶发把"要删的条目"同时又写进 cycle（又删又记，先删后记等于白删）。
 // 删除优先，剔除完全相同（事件+日期）的矛盾新增。
 export function dropContradictoryCycles(cycles, remove) {

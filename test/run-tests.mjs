@@ -10,6 +10,7 @@ import {
   sanitizeRemove,
   removeRequiresIntent,
   dropContradictoryCycles,
+  dropExistingCycles,
 } from '../js/ai.js';
 
 let passed = 0;
@@ -397,6 +398,15 @@ test('又删又记的矛盾条目：删除优先，剔除重复新增', () => {
   ];
   assert.deepEqual(dropContradictoryCycles(cycles, remove), [{ event: 'jelly', date: '2026-06-09' }]);
   assert.deepEqual(dropContradictoryCycles(cycles, { what: 'cycle_today' }), cycles); // 其他删除形态不动
+});
+test('已确认过的周期条目不再进预览（防上文重复输出）', () => {
+  const existing = [{ event: 'jelly', date: '2026-06-11' }];
+  const cycles = [
+    { event: 'jelly', date: '2026-06-11' }, // 已入库 → 滤掉
+    { event: 'period_start', date: '2026-06-11' }, // 新内容 → 保留
+  ];
+  assert.deepEqual(dropExistingCycles(cycles, existing), [{ event: 'period_start', date: '2026-06-11' }]);
+  assert.deepEqual(dropExistingCycles(cycles, undefined), cycles); // 无上下文不过滤
 });
 test('删除意图防火墙：话里没有删除字眼时丢弃 remove', () => {
   const rm = { what: 'cycle_events', items: [{ event: 'bleed_light', date: '2026-06-09' }] };
