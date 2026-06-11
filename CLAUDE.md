@@ -11,7 +11,8 @@
   改完一定截图发给她（playwright 390 或 375 宽，deviceScaleFactor 2）。
 - 设计语言：弥散渐变背景（杏花粉→碧落蓝）+ 磨砂玻璃块面；品牌粉 `#D6809A` 体系管交互
   状态；四时段色（睡醒粉 #E88AA0/午橙 #F0A95C/晚紫 #9D8FE0/睡前蓝 #7EB3E8）管归属；
-  经期红 `#D6283B` 是唯一高饱和信号色。完整色卡见 git log 或问用户。
+  经期红 `#D6283B` 是唯一高饱和信号色。完整色卡在代码里：基础变量在
+  `css/style.css` 顶部 `:root`（暗色变体在 `.dark`），四时段色定义在 `js/checklist.js`。
 
 ## 基础设施（手动配好的部分）
 
@@ -27,7 +28,7 @@
 
 ## 开发与上线流程（已与用户约定）
 
-1. 在分支 `claude/tabby-deepseek-deployment-p5grrf` 上开发。
+1. 在当次会话指定的 `claude/*` 分支上开发（每个 session 的分支名不同，别在这里写死）。
 2. 本地验证（见下节）全过后 → push 分支 → **合并进 main 并 push**（用户已授权
    这个流程，session 后期都是改完直接合并，合并后发截图给她验收）。
 3. 合并 main 自动触发：Pages 发前端；`deploy.yml`（仅 supabase/** 变更时）自动
@@ -38,9 +39,9 @@
 
 ## 铁律
 
-- **改任何前端文件必须 bump `sw.js` 顶部缓存版本号**（交接时是 v19）。前端已有
+- **改任何前端文件必须 bump `sw.js` 顶部缓存版本号**（以文件实际值为准，只增不减）。前端已有
   自动更新（controllerchange → reload），用户打开 app 即拿新版，无需重装。
-- **测试绝不碰真实数据库**：`node test/run-tests.mjs`（纯函数，交接时 30 项）；
+- **测试绝不碰真实数据库**：`node test/run-tests.mjs`（纯函数，不依赖网络）；
   UI 用 `python3 -m http.server 8123` + `http://localhost:8123/?mock=1`
   （mock 全内存）。playwright 在 `/opt/node22/lib/node_modules/playwright`，
   容器重启后需重装 chromium：`npx playwright install chromium --with-deps`。
@@ -80,5 +81,6 @@
 - GH Pages CDN 对 sw.js 有最长 10 分钟缓存，刚发布就让用户验可能拿到旧版，稍等。
 - v2 候选（用户提过没做）：趋势图（VD→精力、镁/B6→PMS强度对照）、临时症状反复
   出现提示转固定标签、多人模式（"瑶"）。
-- 原始需求 spec 见首次会话上传的 supplementtrackerspec.md（核心内容已演化，
-  以现状代码为准；AI 只翻译不决定、落库必经预览确认这条**永远不变**）。
+- 原始需求 spec 是首次会话上传的 supplementtrackerspec.md，**不在仓库里**、后续
+  窗口看不到（核心内容已演化，以现状代码为准；AI 只翻译不决定、落库必经预览确认
+  这条**永远不变**）。
