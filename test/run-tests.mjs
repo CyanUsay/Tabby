@@ -14,7 +14,14 @@ function test(name, fn) {
   console.log(`  ok - ${name}`);
 }
 
-const cfg = { periodLength: 5, pmsMaxDays: 14, bleedGapDays: 1 };
+const cfg = {
+  periodLength: 5,
+  pmsMaxDays: 14,
+  bleedGapDays: 1,
+  lutealDays: 14,
+  lutealMaxDays: 21,
+  postPeriodSuspectDays: 5,
+};
 
 console.log('dates.js');
 test('凌晨 2 点算前一天', () => {
@@ -71,37 +78,37 @@ test('清单按 slot 顺序排列', () => {
   assert.deepEqual(order, [...order].sort((a, b) => a - b));
 });
 
-console.log('cycle.js（观察驱动推算器）');
+console.log('cycle.js（三层判经期）');
 test('无事件 → daily', () => {
   const r = deriveState([], '2026-06-10', cfg);
   assert.equal(r.mode, 'daily');
   assert.equal(r.daysSinceEnd, null);
   assert.equal(r.daysSinceOvulation, null);
+  assert.equal(r.suspectBleed, null);
 });
-test('bleed_heavy → period Day N（默认长度兜底）', () => {
-  const events = [{ event: 'bleed_heavy', date: '2026-06-08' }];
-  const r = deriveState(events, '2026-06-10', cfg);
+test('第一层：亲口宣告当天即经期 Day 1', () => {
+  const r = deriveState([{ event: 'period_start', date: '2026-06-08' }], '2026-06-08', cfg);
   assert.equal(r.mode, 'period');
-  assert.equal(r.dayN, 3);
+  assert.equal(r.dayN, 1);
 });
-test('核心回溯：light light → heavy，Day1 回溯到出血段第一天', () => {
+test('第二层：出血 ≥2 天且含 heavy → 自动判经期，Day1 = 第一天 heavy', () => {
   const events = [
-    { event: 'bleed_light', date: '2026-06-08' },
-    { event: 'bleed_light', date: '2026-06-09' },
+    { event: 'bleed_light', date: '2026-06-07' },
+    { event: 'bleed_heavy', date: '2026-06-08' },
+    { event: 'bleed_heavy', date: '2026-06-09' },
   ];
-  // 只有 light：不是经期，今天是不正出血
-  let r = deriveState(events, '2026-06-09', cfg);
-  assert.equal(r.mode, 'daily');
-  assert.equal(r.spottingToday, true);
-  // 血量上来：整段并入经期，Day1 = 06-08
-  events.push({ event: 'bleed_heavy', date: '2026-06-10' });
-  r = deriveState(events, '2026-06-10', cfg);
+  const r = deriveState(events, '2026-06-09', cfg);
   assert.equal(r.mode, 'period');
-  assert.equal(r.periodStart, '2026-06-08');
-  assert.equal(r.dayN, 3);
+  assert.equal(r.periodStart, '2026-06-08'); // 前置 light 点滴不算 Day1
+  assert.equal(r.dayN, 2);
 });
-test('断档 ≤1 天仍算同一段，≥2 天不合并', () => {
-  // 06-05 light，06-07 heavy：中间缺 06-06 一天 → 合并，Day1=06-05
+test('安全网一：孤立单日 heavy 不自动开经期 → 疑似询问', () => {
+  const r = deriveState([{ event: 'bleed_heavy', date: '2026-06-08' }], '2026-06-10', cfg);
+  assert.equal(r.mode, 'daily');
+  assert.deepEqual(r.suspectBleed, { date: '2026-06-08', reason: 'isolated_heavy' });
+});
+test('断档 ≤1 天仍算同一段参与判定，≥2 天不合并', () => {
+  // light 06-05 + heavy 06-07（缺 06-06）→ 同段 2 天含 heavy → 经期，Day1 = 06-07
   let r = deriveState(
     [
       { event: 'bleed_light', date: '2026-06-05' },
@@ -110,8 +117,9 @@ test('断档 ≤1 天仍算同一段，≥2 天不合并', () => {
     '2026-06-07',
     cfg
   );
-  assert.equal(r.periodStart, '2026-06-05');
-  // 06-03 light，06-07 heavy：断 3 天 → 不合并，light 是孤立不正出血
+  assert.equal(r.mode, 'period');
+  assert.equal(r.periodStart, '2026-06-07');
+  // 断 3 天 → 不合并：heavy 落单 → 不开经期，转疑似询问
   r = deriveState(
     [
       { event: 'bleed_light', date: '2026-06-03' },
@@ -120,13 +128,14 @@ test('断档 ≤1 天仍算同一段，≥2 天不合并', () => {
     '2026-06-07',
     cfg
   );
-  assert.equal(r.periodStart, '2026-06-07');
-  assert.equal(r.dayN, 1);
+  assert.equal(r.mode, 'daily');
+  assert.equal(r.suspectBleed.reason, 'isolated_heavy');
 });
-test('孤立 bleed_light 永远不开启经期', () => {
+test('孤立 bleed_light 永远不开启经期、也不触发询问', () => {
   const r = deriveState([{ event: 'bleed_light', date: '2026-06-10' }], '2026-06-10', cfg);
   assert.equal(r.mode, 'daily');
   assert.equal(r.spottingToday, true);
+  assert.equal(r.suspectBleed, null);
 });
 test('持续报血可顺延默认 5 天的兜底结束', () => {
   const events = ['01', '02', '03', '04', '05', '06', '07'].map((d) => ({
@@ -140,6 +149,7 @@ test('持续报血可顺延默认 5 天的兜底结束', () => {
 test('口头报结束优先于兜底 + daysSinceEnd 起算', () => {
   const events = [
     { event: 'bleed_heavy', date: '2026-06-03' },
+    { event: 'bleed_heavy', date: '2026-06-04' },
     { event: 'period_end', date: '2026-06-09' },
   ];
   assert.equal(deriveState(events, '2026-06-09', cfg).mode, 'period');
@@ -147,41 +157,86 @@ test('口头报结束优先于兜底 + daysSinceEnd 起算', () => {
   assert.equal(r.mode, 'daily');
   assert.equal(r.daysSinceEnd, 3);
 });
-test('旧数据 period_start 等价于 bleed_heavy', () => {
-  const r = deriveState([{ event: 'period_start', date: '2026-06-09' }], '2026-06-10', cfg);
+test('not_period 否决自动判定，且不再追问', () => {
+  const events = [
+    { event: 'bleed_heavy', date: '2026-06-08' },
+    { event: 'bleed_heavy', date: '2026-06-09' },
+    { event: 'not_period', date: '2026-06-09' },
+  ];
+  const r = deriveState(events, '2026-06-09', cfg);
+  assert.equal(r.mode, 'daily');
+  assert.equal(r.spottingToday, true);
+  assert.equal(r.suspectBleed, null);
+});
+test('宣告冲突以较晚者为准，同日否认赢', () => {
+  // 否认之后又宣告 → 翻案成经期，Day1 = 新宣告日
+  const events = [
+    { event: 'bleed_heavy', date: '2026-06-08' },
+    { event: 'not_period', date: '2026-06-08' },
+    { event: 'bleed_heavy', date: '2026-06-09' },
+    { event: 'period_start', date: '2026-06-09' },
+  ];
+  const r = deriveState(events, '2026-06-09', cfg);
+  assert.equal(r.mode, 'period');
+  assert.equal(r.periodStart, '2026-06-09');
+  // 同日平手：否认赢（"说错了"通常是更正刚才的宣告）
+  const r2 = deriveState(
+    [
+      { event: 'period_start', date: '2026-06-08' },
+      { event: 'not_period', date: '2026-06-08' },
+    ],
+    '2026-06-08',
+    cfg
+  );
+  assert.equal(r2.mode, 'daily');
+});
+test('旧数据兼容：单条 period_start 行为不变；与同日 bleed_heavy 并存不混乱', () => {
+  let r = deriveState([{ event: 'period_start', date: '2026-06-09' }], '2026-06-10', cfg);
   assert.equal(r.mode, 'period');
   assert.equal(r.dayN, 2);
-});
-test('pms_start 进入 PMS，经期开始终结，maxDays 兜底', () => {
-  const events = [{ event: 'pms_start', date: '2026-06-01' }];
-  assert.equal(deriveState(events, '2026-06-05', cfg).mode, 'pms');
-  events.push({ event: 'bleed_heavy', date: '2026-06-08' });
-  assert.equal(deriveState(events, '2026-06-08', cfg).mode, 'period');
-  assert.equal(deriveState(events, '2026-06-14', cfg).mode, 'daily'); // 不回 PMS
-  assert.equal(
-    deriveState([{ event: 'pms_start', date: '2026-05-20' }], '2026-06-03', cfg).mode,
-    'daily' // 第 14 天兜底过期
+  r = deriveState(
+    [
+      { event: 'period_start', date: '2026-06-08' },
+      { event: 'bleed_heavy', date: '2026-06-08' },
+    ],
+    '2026-06-09',
+    cfg
   );
+  assert.equal(r.mode, 'period');
+  assert.equal(r.periodStart, '2026-06-08');
+  assert.equal(r.dayN, 2);
 });
-test('排卵 = 果冻连续段最后一天，进行中暂记今天', () => {
+test('安全网二：经期结束后 5 天内再出血 → 挂起自动判定 + 询问；确认后成新经期', () => {
   const events = [
-    { event: 'jelly', date: '2026-06-06' },
-    { event: 'jelly', date: '2026-06-07' },
-    { event: 'jelly', date: '2026-06-08' },
-  ];
-  // 段进行中（今天也有果冻）
-  assert.equal(deriveState(events, '2026-06-08', cfg).daysSinceOvulation, 0);
-  // 段已结束：排卵落定 06-08，今天是排卵后 2 天
-  const r = deriveState(events, '2026-06-10', cfg);
-  assert.equal(r.ovulationDate, '2026-06-08');
-  assert.equal(r.daysSinceOvulation, 2);
-});
-test('经期来过之后，排卵计数不再显示', () => {
-  const events = [
-    { event: 'jelly', date: '2026-05-25' },
+    { event: 'period_start', date: '2026-06-01' },
+    { event: 'period_end', date: '2026-06-05' },
     { event: 'bleed_heavy', date: '2026-06-08' },
+    { event: 'bleed_heavy', date: '2026-06-09' },
   ];
-  assert.equal(deriveState(events, '2026-06-10', cfg).daysSinceOvulation, null);
+  const r = deriveState(events, '2026-06-09', cfg);
+  assert.equal(r.mode, 'daily'); // ≥2 天含 heavy 本应自动判，但落在 5 天窗内 → 只问不判
+  assert.equal(r.spottingToday, true);
+  assert.deepEqual(r.suspectBleed, { date: '2026-06-08', reason: 'post_period' });
+  // 主人点头"是月经" → 新经期 Day1 = 确认日期
+  events.push({ event: 'period_start', date: '2026-06-08' });
+  const r2 = deriveState(events, '2026-06-09', cfg);
+  assert.equal(r2.mode, 'period');
+  assert.equal(r2.periodStart, '2026-06-08');
+  assert.equal(r2.dayN, 2);
+});
+test('period_end 之后同段又出血 → 拆出残段进入疑似询问', () => {
+  const events = [
+    { event: 'period_start', date: '2026-06-01' },
+    { event: 'bleed_heavy', date: '2026-06-02' },
+    { event: 'bleed_heavy', date: '2026-06-03' },
+    { event: 'period_end', date: '2026-06-03' },
+    { event: 'bleed_light', date: '2026-06-05' },
+  ];
+  const r = deriveState(events, '2026-06-05', cfg);
+  assert.equal(r.mode, 'daily');
+  assert.equal(r.daysSinceEnd, 2);
+  assert.equal(r.spottingToday, true);
+  assert.deepEqual(r.suspectBleed, { date: '2026-06-05', reason: 'post_period' });
 });
 test('未来日期的事件不影响今天', () => {
   const events = [
@@ -192,6 +247,100 @@ test('未来日期的事件不影响今天', () => {
 });
 test('backfillStart：经期第 3 天 → start = 今天-2', () => {
   assert.equal(backfillStart('2026-06-10', 3), '2026-06-08');
+});
+
+console.log('cycle.js（PMS）');
+test('pms_start 进入 PMS，经期开始终结，maxDays 兜底', () => {
+  const events = [{ event: 'pms_start', date: '2026-06-01' }];
+  assert.equal(deriveState(events, '2026-06-05', cfg).mode, 'pms');
+  events.push({ event: 'period_start', date: '2026-06-08' });
+  assert.equal(deriveState(events, '2026-06-08', cfg).mode, 'period');
+  assert.equal(deriveState(events, '2026-06-14', cfg).mode, 'daily'); // 不回 PMS
+  assert.equal(
+    deriveState([{ event: 'pms_start', date: '2026-05-20' }], '2026-06-03', cfg).mode,
+    'daily' // 第 14 天兜底过期
+  );
+});
+
+console.log('cycle.js（排卵与预测）');
+test('排卵日 = 果冻段末 + 1；段进行中待定，消退后自动落定', () => {
+  const events = [
+    { event: 'jelly', date: '2026-06-06' },
+    { event: 'jelly', date: '2026-06-07' },
+    { event: 'jelly', date: '2026-06-08' },
+  ];
+  // 段进行中（今天也有果冻）：排卵日空着，诚实优先
+  let r = deriveState(events, '2026-06-08', cfg);
+  assert.equal(r.ovulationDate, null);
+  assert.equal(r.ovulationPending, true);
+  assert.equal(r.daysSinceOvulation, null);
+  assert.equal(r.predictedPeriod, null);
+  assert.equal(r.phase, 'ovulation');
+  // 黏液消退：排卵日落定 = 段末+1 = 06-09
+  r = deriveState(events, '2026-06-10', cfg);
+  assert.equal(r.ovulationDate, '2026-06-09');
+  assert.equal(r.ovulationPending, false);
+  assert.equal(r.daysSinceOvulation, 1);
+});
+test('排卵期显示 = 段第 2 天到排卵日当天；黄体期紧随其后，距排卵日 21 天兜底', () => {
+  const events = [
+    { event: 'jelly', date: '2026-06-06' },
+    { event: 'jelly', date: '2026-06-07' },
+  ];
+  assert.equal(deriveState(events, '2026-06-06', cfg).phase, 'normal'); // 第一天还看不出连续
+  assert.equal(deriveState(events, '2026-06-07', cfg).phase, 'ovulation');
+  assert.equal(deriveState(events, '2026-06-08', cfg).phase, 'ovulation'); // 排卵日（段末+1）当天
+  assert.equal(deriveState(events, '2026-06-09', cfg).phase, 'luteal'); // 无空窗衔接
+  assert.equal(deriveState(events, '2026-06-29', cfg).phase, 'luteal'); // 距排卵日第 21 天仍黄体
+  assert.equal(deriveState(events, '2026-06-30', cfg).phase, 'normal'); // 超 21 天兜底
+});
+test('单日果冻不构成排卵期', () => {
+  const events = [{ event: 'jelly', date: '2026-06-07' }];
+  assert.equal(deriveState(events, '2026-06-07', cfg).phase, 'normal');
+  assert.equal(deriveState(events, '2026-06-09', cfg).phase, 'normal');
+});
+test('排卵日当天补果冻：phase 稳定为排卵期，排卵日顺延待定', () => {
+  const events = [
+    { event: 'jelly', date: '2026-06-05' },
+    { event: 'jelly', date: '2026-06-06' },
+    { event: 'jelly', date: '2026-06-07' },
+  ];
+  assert.equal(deriveState(events, '2026-06-08', cfg).phase, 'ovulation'); // 排卵日当天
+  events.push({ event: 'jelly', date: '2026-06-08' }); // 当天又记到果冻
+  const r = deriveState(events, '2026-06-08', cfg);
+  assert.equal(r.phase, 'ovulation'); // 不跳变
+  assert.equal(r.ovulationPending, true);
+});
+test('预测经期 = 窗口 [排卵+14, 排卵+21]，窗口划过即清空', () => {
+  const events = [
+    { event: 'jelly', date: '2026-06-01' },
+    { event: 'jelly', date: '2026-06-02' },
+  ];
+  // 排卵日 06-03
+  const r = deriveState(events, '2026-06-05', cfg);
+  assert.deepEqual(r.predictedPeriod, { start: '2026-06-17', end: '2026-06-24' });
+  assert.equal(deriveState(events, '2026-06-25', cfg).predictedPeriod, null);
+});
+test('孤立 heavy 落在预测窗口内先不问（等次日续上），窗口划过仍孤立则补问', () => {
+  const events = [
+    { event: 'jelly', date: '2026-06-01' },
+    { event: 'jelly', date: '2026-06-02' },
+    { event: 'bleed_heavy', date: '2026-06-18' }, // 窗口 06-17~06-24 内
+  ];
+  assert.equal(deriveState(events, '2026-06-19', cfg).suspectBleed, null);
+  assert.equal(deriveState(events, '2026-06-25', cfg).suspectBleed.reason, 'isolated_heavy');
+});
+test('完成使命：经期来了，这次排卵的派生信息全部清空', () => {
+  const events = [
+    { event: 'jelly', date: '2026-06-01' },
+    { event: 'jelly', date: '2026-06-02' },
+    { event: 'period_start', date: '2026-06-18' },
+  ];
+  const r = deriveState(events, '2026-06-19', cfg);
+  assert.equal(r.mode, 'period');
+  assert.equal(r.daysSinceOvulation, null);
+  assert.equal(r.predictedPeriod, null);
+  assert.equal(deriveState(events, '2026-06-24', cfg).phase, 'normal'); // 经期结束后不回黄体
 });
 
 console.log('ai.js 白名单过滤');
@@ -208,55 +357,6 @@ test('不在应服清单内的 intake 项被丢弃', () => {
   assert.equal(filtered.length, 1);
   assert.equal(filtered[0].supplement, 'VC');
   assert.equal(filtered[0].dose, '500 mg'); // 剂量快照来自清单，不信 AI
-});
-
-console.log(`\n${passed} tests passed`);
-
-console.log('cycle.js（排卵→经期预测）');
-test('排卵落定后给出预测经期 = 排卵 + 14', () => {
-  const events = [
-    { event: 'jelly', date: '2026-06-06' },
-    { event: 'jelly', date: '2026-06-07' },
-  ];
-  const r = deriveState(events, '2026-06-09', cfg);
-  assert.equal(r.ovulationDate, '2026-06-07');
-  assert.equal(r.predictedPeriod, '2026-06-21');
-});
-test('经期来了之后预测清空', () => {
-  const events = [
-    { event: 'jelly', date: '2026-06-01' },
-    { event: 'bleed_heavy', date: '2026-06-08' },
-  ];
-  assert.equal(deriveState(events, '2026-06-09', cfg).predictedPeriod, null);
-});
-
-console.log(`\n共 ${passed} tests passed`);
-
-console.log('cycle.js（阶段四分类）');
-test('连续两天果冻 → 排卵期；段结束次日立即黄体期', () => {
-  const events = [
-    { event: 'jelly', date: '2026-06-06' },
-    { event: 'jelly', date: '2026-06-07' },
-  ];
-  assert.equal(deriveState(events, '2026-06-06', cfg).phase, 'normal'); // 第一天还看不出连续
-  assert.equal(deriveState(events, '2026-06-07', cfg).phase, 'ovulation'); // 第二天确认连续 → 排卵期
-  assert.equal(deriveState(events, '2026-06-08', cfg).phase, 'luteal'); // 紧接黄体期
-  assert.equal(deriveState(events, '2026-06-23', cfg).phase, 'luteal'); // 第 16 天仍黄体
-  assert.equal(deriveState(events, '2026-06-24', cfg).phase, 'normal'); // 超上限回正常
-});
-test('单日果冻不构成排卵期', () => {
-  const events = [{ event: 'jelly', date: '2026-06-07' }];
-  assert.equal(deriveState(events, '2026-06-07', cfg).phase, 'normal');
-  assert.equal(deriveState(events, '2026-06-09', cfg).phase, 'normal');
-});
-test('经期覆盖一切阶段；经期来过后黄体期清零', () => {
-  const events = [
-    { event: 'jelly', date: '2026-06-05' },
-    { event: 'jelly', date: '2026-06-06' },
-    { event: 'bleed_heavy', date: '2026-06-10' },
-  ];
-  assert.equal(deriveState(events, '2026-06-10', cfg).phase, 'period');
-  assert.equal(deriveState(events, '2026-06-16', cfg).phase, 'normal'); // 经期结束后不回黄体
 });
 
 console.log(`\n合计 ${passed} tests passed`);

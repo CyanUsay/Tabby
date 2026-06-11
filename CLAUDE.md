@@ -55,11 +55,18 @@
 
 ## 数据模型心智（最重要的设计决策）
 
-- **记录与判断分离**：`cycle_event` 只存观察事实（jelly / bleed_light /
-  bleed_heavy / period_end / pms_start；period_start 为旧数据兼容=heavy），
-  状态由 `js/cycle.js` 的 `deriveState` 对全部历史推算，**新观察自动回溯修正旧解读**
-  （如出血段并入经期、Day1 回溯）。永远不要直接"改写"历史判断，改观察即可。
-- 用户经期不规律，**一切预测不可靠**，唯一可靠预估 = 排卵日 + 黄体期 14 天。
+- **记录与判断分离**：`cycle_event` 只存观察/宣告（jelly / bleed_light / bleed_heavy=
+  纯血量观察 / period_start=亲口宣告经期开始 / not_period=亲口否认"是月经" /
+  period_end / pms_start），状态由 `js/cycle.js` 的 `deriveState` 对全部历史推算，
+  **新观察自动回溯修正旧解读**。永远不要直接"改写"历史判断，改观察即可。
+- **三层判经期**（0004 起，从硬到软）：①亲口宣告最大（period_start/not_period，
+  冲突取日期较晚者、同日否认赢，Day1=宣告日）②无宣告：出血段 ≥2 天且含 heavy →
+  判经期，Day1=段内第一天 heavy（前置点滴不算 Day1 但参与分段/顺延）③两张安全网
+  **不自动判**、返回 suspectBleed 由 UI 弹窗问：孤立单日 heavy（落在预测窗口内先等
+  次日续上，窗口划过补问）、经期结束后 5 天内又出血（含 period_end 后拆段）。
+- 用户经期不规律，**一切预测不可靠**，唯一可靠预估 = 排卵日 + 14~21 天窗口。
+  排卵日 = 果冻连续段（严格逐日、≥2 天）末日 +1（黏液消退日）；段进行中排卵日
+  待定（ovulationPending），消退后重算自动落定。
 - RLS：intake_log 无 delete（取消打卡=taken false）；cycle_event/symptom_log
   有 delete（0003 起，支持聊天撤销指令）；symptom"清除"= 真删除行。
 - 聊天解析带最近 6 条对话上下文（修复"都有"被误判的 bug），cycle 可为数组（多天补记）。
@@ -68,10 +75,13 @@
 
 - day cutoff **早上 5:00**（用户 DSPS 作息，凌晨算前一天）。
 - periodLength 5 / pmsMaxDays 14 / bleedGapDays 1（出血断档≤1天算同段）/
-  lutealDays 14 / 黄体期上限 16 天。
-- 状态四分类：正常 / 排卵期（连续≥2天果冻段内）/ 黄体期（段束**立刻**开始）/
-  经期 Day X；PMS 显示优先级高于排卵/黄体。
+  lutealDays 14（预测窗口下限）/ lutealMaxDays 21（窗口上限兼黄体兜底，距排卵日
+  起算）/ postPeriodSuspectDays 5（都在 js/config.js）。
+- 状态四分类：正常 / 排卵期（果冻段第 2 天起到排卵日当天）/ 黄体期（排卵日次日起，
+  无空窗）/ 经期 Day X；PMS 显示优先级高于排卵/黄体。
 - PMS 标记症状（触发"要进入PMS模式吗"询问）：胸胀、情绪低落、睡眠障碍。
+- 症状严重度三档（js/symptoms.js severityLevel）：平稳=没记或 1 项轻 / 轻=2~3 项
+  全轻 / 明显=任一≥中或≥4 项；日历 PMS 色带浓度 50/75/100% 跟随此档。
 - 失眠/噩梦/吓醒统一归并"睡眠障碍"（"噩梦"标签已降级非固定）。
 
 ## 已知遗留与 v2 候选

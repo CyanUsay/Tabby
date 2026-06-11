@@ -13,7 +13,12 @@ export function makeMockDb() {
     { event: 'jelly', date: '2026-06-05' },
     { event: 'jelly', date: '2026-06-06' },
     { event: 'jelly', date: '2026-06-07' },
+    { event: 'pms_start', date: '2026-06-09' },
   ];
+  // PMS 色带浓度演示：06-09 明显（中度）→ 100%，06-10 轻（两项轻）→ 75%，今天没记 → 50%
+  symptoms.set('2026-06-09|胸胀', { date: '2026-06-09', symptom: '胸胀', severity: 2, is_custom: false });
+  symptoms.set('2026-06-10|情绪低落', { date: '2026-06-10', symptom: '情绪低落', severity: 1, is_custom: false });
+  symptoms.set('2026-06-10|睡眠障碍', { date: '2026-06-10', symptom: '睡眠障碍', severity: 1, is_custom: false });
   const catalog = ['胸胀', '睡眠障碍', '情绪低落', '精力', '头痛', '腹痛', '发热感'];
 
   return {
@@ -29,6 +34,8 @@ export function makeMockDb() {
     },
     fetchTodaySymptoms: async (date) =>
       [...symptoms.values()].filter((r) => r.date === date),
+    fetchSymptomsRange: async (from, to) =>
+      [...symptoms.values()].filter((r) => r.date >= from && r.date <= to),
     insertCycleEvent: async (e) => {
       if (!cycleEvents.some((x) => x.event === e.event && x.date === e.date)) cycleEvents.push(e);
       return null;
@@ -97,8 +104,12 @@ export function mockParse(text, context) {
       }
       if (text.includes('膝盖疼')) result.symptoms.push({ symptom: '膝盖疼', severity: 1, is_custom: true });
 
-      if (text.includes('例假') || text.includes('月经') || text.includes('量多')) {
-        result.cycle = { event: 'bleed_heavy', date: context.date };
+      if (text.includes('不是月经') || text.includes('不是例假')) {
+        result.cycle = { event: 'not_period', date: context.date };
+      } else if (text.includes('例假') || text.includes('月经')) {
+        result.cycle = { event: 'period_start', date: context.date }; // 亲口宣告
+      } else if (text.includes('量多')) {
+        result.cycle = { event: 'bleed_heavy', date: context.date }; // 纯血量观察
       }
       if (text.includes('结束') || text.includes('走了')) {
         result.cycle = { event: 'period_end', date: context.date };

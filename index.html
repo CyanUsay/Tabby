@@ -23,7 +23,10 @@
       <div class="app-title">TABBY</div>
       <div id="today-line" class="today-line"></div>
     </div>
-    <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">☀️</button>
+    <div class="topbar-right">
+      <span id="topbar-mode" class="mode-chip">正常</span>
+      <button id="theme-toggle" class="theme-toggle" aria-label="切换主题">☀️</button>
+    </div>
   </header>
 
   <div id="install-hint" class="banner hidden">
@@ -65,27 +68,23 @@
         </button>
         <div class="done-sub" id="done-sub">今天正常完成</div>
       </div>
+      <!-- 三个统计位都可点按切换显示内容 -->
       <div class="stats">
-        <div class="stat">
-          <span class="stat-icon" data-tint="blue">✦</span>
-          <span class="stat-label">状态</span>
-          <span id="stat-mode" class="stat-value">日常</span>
-        </div>
-        <div class="stat">
+        <button class="stat" id="stat-recent-btn">
           <span class="stat-icon" data-tint="orange">❀</span>
           <span id="stat-recent-label" class="stat-label">经期结束后</span>
           <span id="stat-recent" class="stat-value">—</span>
-        </div>
-        <div class="stat">
+        </button>
+        <button class="stat" id="stat-predict-btn">
           <span class="stat-icon" data-tint="purple">☾</span>
           <span class="stat-label">预测经期</span>
           <span id="stat-predict" class="stat-value">—</span>
-        </div>
-        <div class="stat">
+        </button>
+        <button class="stat" id="stat-symptoms-btn">
           <span class="stat-icon" data-tint="pink">♥</span>
           <span class="stat-label">今日症状</span>
           <span id="stat-symptoms" class="stat-value">0 项</span>
-        </div>
+        </button>
       </div>
     </section>
 

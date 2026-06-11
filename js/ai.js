@@ -66,7 +66,7 @@ export function sanitizeSymptoms(symptoms, fixedSymptoms) {
     }));
 }
 
-export const CYCLE_EVENTS = ['period_start', 'period_end', 'pms_start', 'jelly', 'bleed_light', 'bleed_heavy'];
+export const CYCLE_EVENTS = ['period_start', 'period_end', 'pms_start', 'jelly', 'bleed_light', 'bleed_heavy', 'not_period'];
 
 // 规整 cycle：只接受合法事件名 + YYYY-MM-DD；支持单个或数组（补记多天），去重限量
 export function sanitizeCycles(cycle) {

@@ -13,7 +13,9 @@ export const cycleConfig = {
   periodLength: 5, // 没口头报告"结束"时，经期默认持续天数
   pmsMaxDays: 14, // 进入 PMS 后最长持续天数（兜底，防止忘记报经期）
   bleedGapDays: 1, // 出血记录断档几天以内仍算同一段（决定 Day1 回溯合并）
-  lutealDays: 14, // 黄体期长度：排卵日 + 此值 ≈ 预测经期
+  lutealDays: 14, // 预测经期窗口下限：排卵日 + 此值
+  lutealMaxDays: 21, // 预测窗口上限；也是黄体期兜底（距排卵日超过此天数退回正常）
+  postPeriodSuspectDays: 5, // 经期结束后几天内再出血 → 弹"疑似不正出血"询问
 };
 
 // 记录到这些症状且当前是日常模式时，Tabby 会询问"要进入 PMS 模式吗？"
