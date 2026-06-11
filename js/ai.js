@@ -86,6 +86,14 @@ export function sanitizeCycles(cycle) {
   return out;
 }
 
+// 模型偶发把"要删的条目"同时又写进 cycle（又删又记，先删后记等于白删）。
+// 删除优先，剔除完全相同（事件+日期）的矛盾新增。
+export function dropContradictoryCycles(cycles, remove) {
+  if (!remove || remove.what !== 'cycle_events') return cycles;
+  const del = new Set(remove.items.map((i) => `${i.event}|${i.date}`));
+  return cycles.filter((c) => !del.has(`${c.event}|${c.date}`));
+}
+
 // 规整 remove（撤销/删除指令）：只接受白名单动作。
 // cycle_events = 按"事件+日期"逐条精确删（可删任意过去日期的记录）
 export function sanitizeRemove(remove) {

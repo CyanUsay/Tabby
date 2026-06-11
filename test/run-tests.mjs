@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { appToday, addDays, diffDays, weekOf } from '../js/dates.js';
 import { getChecklist, SLOTS } from '../js/protocol.js';
 import { deriveState, backfillStart } from '../js/cycle.js';
-import { filterIntakeToChecklist, sanitizeRemove } from '../js/ai.js';
+import { filterIntakeToChecklist, sanitizeRemove, dropContradictoryCycles } from '../js/ai.js';
 
 let passed = 0;
 function test(name, fn) {
@@ -371,6 +371,15 @@ test('sanitizeRemove：cycle_events 过滤编造项、去重、空则整体置 n
   assert.deepEqual(r, { what: 'cycle_events', items: [{ event: 'period_start', date: '2026-06-09' }] });
   assert.equal(sanitizeRemove({ what: 'cycle_events', items: [{ event: 'x', date: 'y' }] }), null);
   assert.deepEqual(sanitizeRemove({ what: 'last' }), { what: 'last' });
+});
+test('又删又记的矛盾条目：删除优先，剔除重复新增', () => {
+  const remove = { what: 'cycle_events', items: [{ event: 'pms_start', date: '2026-06-09' }] };
+  const cycles = [
+    { event: 'pms_start', date: '2026-06-09' }, // 与删除完全相同 → 剔除
+    { event: 'jelly', date: '2026-06-09' }, // 不同事件 → 保留
+  ];
+  assert.deepEqual(dropContradictoryCycles(cycles, remove), [{ event: 'jelly', date: '2026-06-09' }]);
+  assert.deepEqual(dropContradictoryCycles(cycles, { what: 'cycle_today' }), cycles); // 其他删除形态不动
 });
 
 console.log(`\n合计 ${passed} tests passed`);
