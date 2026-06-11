@@ -390,9 +390,9 @@ header.topbar {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 74px;
-  height: 74px;
-  margin: -37px 0 0 -37px;
+  width: 72px;
+  height: 72px;
+  margin: -36px 0 0 -36px;
   border-radius: 50%;
   transform: rotate(-12deg);
   opacity: 0;
@@ -1163,14 +1163,14 @@ header.topbar {
 
 /* 输入框聚焦时：分割线和小猫一起变粉激活 */
 .chat-divider.awake {
-  background: #e88aa0;
+  background: var(--accent); /* 与输入框聚焦粉一致 */
 }
 
 .chat-cat {
   position: absolute;
   right: 6px;
   bottom: 1px;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--muted);
   -webkit-user-select: none;
@@ -1179,7 +1179,7 @@ header.topbar {
 }
 
 .chat-cat.awake {
-  color: var(--accent-deep);
+  color: var(--accent); /* 与输入框聚焦粉一致 */
 }
 
 /* 未激活：普通玻璃样式；聚焦后变粉色框 */
