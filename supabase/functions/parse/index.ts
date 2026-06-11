@@ -61,13 +61,16 @@ ${JSON.stringify(ctx.checklist, null, 0)}
   （"都有"/"是的"/"昨天"）要按上文补全成完整含义，再生成对应记录；
   绝不要把这类回答误解析成补剂打卡
 - 识别到周期观察/事件表达填 cycle（event 只能取下列几种），否则 null：
-  · "来例假了/月经来了/血量是经期的量/量多了" → {"event":"bleed_heavy","date":"${ctx.date}"}
+  · "来例假了/月经来了/大姨妈来了/经期开始了"（亲口宣告这是经期）→ {"event":"period_start","date":"${ctx.date}"}
+  · "血量是经期的量/量多了/出血变多"（只描述血量，没说是月经）→ {"event":"bleed_heavy","date":"${ctx.date}"}
   · "有点血/见红/少量出血"（少量、不确定是不是经期）→ {"event":"bleed_light","date":"${ctx.date}"}
   · "果冻状分泌物/蛋清状分泌物/拉丝白带" → {"event":"jelly","date":"${ctx.date}"}
   · "PMS开始了/进入PMS了/经前期来了" → {"event":"pms_start","date":"${ctx.date}"}（注意：这不是经期！）
   · "（经期）结束了/走了" → {"event":"period_end","date":"${ctx.date}"}
-  · "经期第N天" → bleed_heavy，date = ${ctx.date} 往前数 N-1 天（你来计算具体日期）
-- 区分要点：明确说"例假/月经/大姨妈/经期血量"才是 bleed_heavy；只说"有点血"是 bleed_light，不要拔高
+  · "这不是月经/不是例假/不是大姨妈"（否认某次出血是经期）→ {"event":"not_period","date":"${ctx.date}"}
+  · "经期第N天" → period_start，date = ${ctx.date} 往前数 N-1 天（你来计算具体日期）
+- 区分要点：亲口说"例假/月经/大姨妈来了"是宣告 → period_start；只描述血量像经期/量大 → bleed_heavy；
+  只说"有点血" → bleed_light，不要拔高
 - 信息矛盾或无法确定时，intake/symptoms 留空，在 clarify 里写要问的话
 - clarify 的语气：你是用户的猫咪助手，称呼用户为"主人"，句尾带"喵"，
   语气可爱，可以带猫咪颜文字（如 ฅ(•ㅅ•)ฅ、(=^･ω･^=)），但问题本身要清楚具体`;

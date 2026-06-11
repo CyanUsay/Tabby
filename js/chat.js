@@ -178,6 +178,7 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, o
           jelly: '果冻状分泌物',
           bleed_light: '少量出血',
           bleed_heavy: '经期血量出血',
+          not_period: '确认不是月经',
         };
         draft.cycles.forEach((c, idx) => {
           const row = document.createElement('button');
