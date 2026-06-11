@@ -63,6 +63,7 @@ ${(ctx.cycleEvents ?? []).map((e) => `${e.date} ${e.event}`).join('、') || '（
       （"整个经期"= 该段的 period_start/bleed_heavy/bleed_light/period_end 条目；
       jelly、pms_start、not_period 不属于经期记录，用户点名才删）；
       对不上号才用 clarify 问，能对上就直接给 items 不要反问
+  · 纯删除指令时 cycle 必须为 null——绝不要把要删的条目再写进 cycle（又删又记等于没删）
 - 补记多天：用户可能一次报多天，cycle 用数组逐天生成：
   · "9号和10号都有少量出血" → 两条 bleed_light（date 取今天所在月份的 9 日与 10 日；若该日期晚于今天则取上个月）
   · "昨天" = ${ctx.date} 减 1 天；"前天" = 减 2 天；"这两天有果冻" = 昨天和今天各一条 jelly
