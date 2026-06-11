@@ -212,7 +212,7 @@ header.topbar {
 }
 
 .bw-day .hl.pms {
-  background: #9c7bff;
+  background: #9d8fe0; /* 晚饭后紫 */
 }
 
 /* 色带不透明：垫在数字下面，数字翻白保证可读 */
@@ -295,7 +295,7 @@ header.topbar {
 }
 
 .lg-hl.pms {
-  background: #9c7bff;
+  background: #9d8fe0;
 }
 
 .lg-ul {
@@ -375,6 +375,11 @@ header.topbar {
 
 .done-btn.done .done-track {
   stroke: #e88aa0; /* 完成态圆环 = 睡醒时段的粉 */
+}
+
+/* 完成态：圆环外圈发光，和睡醒时段勾选圆同款 */
+.done-btn.done {
+  box-shadow: var(--shadow), 0 0 22px color-mix(in srgb, #e88aa0 60%, transparent);
 }
 
 .done-label {
@@ -1168,7 +1173,7 @@ header.topbar {
 
 .chat-cat {
   position: absolute;
-  right: 6px;
+  left: 6px;
   bottom: 1px;
   font-size: 18px;
   font-weight: 700;
