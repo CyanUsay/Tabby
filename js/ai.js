@@ -90,7 +90,8 @@ export function sanitizeCycles(cycle) {
 // 也翻成 remove。用户话里没有任何删除/纠错字眼 → remove 一律丢弃。
 export function removeRequiresIntent(remove, userText) {
   if (!remove) return null;
-  return /[删撤]|清除|取消|搞错|记错|弄错|去掉|不算/.test(userText) ? remove : null;
+  // "错"单字覆盖 说错/搞错/记错/弄错 全家；日常话术里"错"几乎只在纠错时出现
+  return /[删撤错]|清除|清空|取消|去掉|不算|移除|抹掉|划掉/.test(userText) ? remove : null;
 }
 
 // 模型偶发把"要删的条目"同时又写进 cycle（又删又记，先删后记等于白删）。
@@ -102,25 +103,44 @@ export function dropContradictoryCycles(cycles, remove) {
 }
 
 // 规整 remove（撤销/删除指令）：只接受白名单动作。
-// cycle_events = 按"事件+日期"逐条精确删（可删任意过去日期的记录）
+// cycle_events / symptom_entries = 按条精确删（可删任意过去日期的记录）
 export function sanitizeRemove(remove) {
   if (!remove || typeof remove !== 'object') return null;
   if (['last', 'cycle_today', 'symptoms_today'].includes(remove.what)) {
     return { what: remove.what };
   }
   if (remove.what === 'cycle_events' && Array.isArray(remove.items)) {
-    const seen = new Set();
-    const items = [];
-    for (const it of remove.items) {
-      if (!it || !CYCLE_EVENTS.includes(it.event)) continue;
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(it.date || '')) continue;
-      const key = `${it.event}|${it.date}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      items.push({ event: it.event, date: it.date });
-      if (items.length >= 14) break;
-    }
+    const items = dedupeItems(remove.items, (it) =>
+      CYCLE_EVENTS.includes(it.event) && isDateStr(it.date)
+        ? { event: it.event, date: it.date }
+        : null
+    );
     if (items.length) return { what: 'cycle_events', items };
   }
+  if (remove.what === 'symptom_entries' && Array.isArray(remove.items)) {
+    const items = dedupeItems(remove.items, (it) =>
+      typeof it.symptom === 'string' && it.symptom.trim() && isDateStr(it.date)
+        ? { date: it.date, symptom: it.symptom.trim() }
+        : null
+    );
+    if (items.length) return { what: 'symptom_entries', items };
+  }
   return null;
+}
+
+const isDateStr = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d || '');
+
+function dedupeItems(list, normalize) {
+  const seen = new Set();
+  const out = [];
+  for (const raw of list) {
+    const it = raw && typeof raw === 'object' ? normalize(raw) : null;
+    if (!it) continue;
+    const key = Object.values(it).join('|');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(it);
+    if (out.length >= 14) break;
+  }
+  return out;
 }

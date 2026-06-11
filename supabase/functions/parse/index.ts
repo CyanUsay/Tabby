@@ -65,6 +65,8 @@ ${(ctx.cycleEvents ?? []).map((e) => `${e.date} ${e.event}`).join('、') || '（
   · 仅当用户明确点名"今天"（"把今天的周期记录删了/搞错了，今天不是经期"）
     → {"what":"cycle_today"}
   · "把今天记的症状都删了" → {"what":"symptoms_today"}
+  · 删过去某天记的症状（"把9号记的胸胀删掉"）
+    → {"what":"symptom_entries","items":[{"date":"YYYY-MM-DD","symptom":"胸胀"},...]}
   · 纯删除指令时 cycle 必须为 null——绝不要把要删的条目再写进 cycle（又删又记等于没删）
   · 只有用户当前这句话明确表达删除/撤销/纠错时才填 remove；单纯描述身体状况
     （出血/流血/果冻/经期开始等）永远是记录 cycle、remove=null——

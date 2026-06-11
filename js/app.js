@@ -662,24 +662,56 @@ function maybePromptSuspectBleed() {
 }
 
 /* ---------- 删除/撤销 ---------- */
-async function executeRemove(remove) {
+// 症状行只保留可重插的字段（select=* 带回的 id/created_at 不能进 upsert）
+const symptomRowFields = (r) => ({
+  date: r.date,
+  symptom: r.symptom,
+  severity: r.severity,
+  is_custom: r.is_custom ?? false,
+});
+
+// 执行删除前先把被删的行存进 snapshot —— "撤销"时重插回去，删除也有后悔药
+async function executeRemove(remove, snapshot) {
   if (remove.what === 'symptoms_today') {
+    snapshot.deletedSymptoms = state.todaySymptoms
+      .filter((s) => s.severity > 0)
+      .map(symptomRowFields);
     await db.deleteSymptomsByDate(state.today);
-    return '今天的症状记录都删掉了喵 ฅ(•ㅅ•)ฅ';
+    return '今天的症状记录都删掉了喵；想反悔说"撤销"就能找回 ฅ(•ㅅ•)ฅ';
   }
   if (remove.what === 'cycle_today') {
+    snapshot.deletedCycles = state.cycleEvents
+      .filter((e) => e.date === state.today)
+      .map(({ event, date }) => ({ event, date }));
     await db.deleteCycleEventsByDate(state.today);
-    return '今天的周期记录删掉了喵，状态重新算过了 ฅ(•ㅅ•)ฅ';
+    return '今天的周期记录删掉了喵，状态重新算过了；想反悔说"撤销"就能找回 ฅ(•ㅅ•)ฅ';
   }
   if (remove.what === 'cycle_events') {
-    for (const it of remove.items) await db.deleteCycleEvent(it);
-    return `删掉了 ${remove.items.length} 条周期记录喵，状态重新算过了 ฅ(•ㅅ•)ฅ`;
+    // 只快照真实存在的条目：撤销重插时才不会凭空造出新记录
+    const existing = new Set(state.cycleEvents.map((e) => `${e.event}|${e.date}`));
+    snapshot.deletedCycles = remove.items.filter((it) => existing.has(`${it.event}|${it.date}`));
+    await Promise.all(remove.items.map((it) => db.deleteCycleEvent(it)));
+    return `删掉了 ${snapshot.deletedCycles.length} 条周期记录喵，状态重新算过了；想反悔说"撤销"就能找回 ฅ(•ㅅ•)ฅ`;
   }
-  // what === 'last'：撤销最近一次聊天确认
+  if (remove.what === 'symptom_entries') {
+    const dates = [...new Set(remove.items.map((i) => i.date))].sort();
+    const rows = await db.fetchSymptomsRange(dates[0], dates[dates.length - 1]);
+    const want = new Set(remove.items.map((i) => `${i.date}|${i.symptom}`));
+    snapshot.deletedSymptoms = rows
+      .filter((r) => want.has(`${r.date}|${r.symptom}`))
+      .map(symptomRowFields);
+    await Promise.all(remove.items.map((i) => db.deleteSymptom(i.date, i.symptom)));
+    return `删掉了 ${snapshot.deletedSymptoms.length} 条症状记录喵；想反悔说"撤销"就能找回 ฅ(•ㅅ•)ฅ`;
+  }
+  // what === 'last'：撤销最近一次聊天确认（新增→删掉，删掉→重插）
   const last = state.lastCommit;
   if (!last) return '咦…Tabby 不记得刚才记过什么了喵，要不直接说删哪条？(=･ｪ･=?';
-  for (const c of last.cycles ?? []) await db.deleteCycleEvent(c);
-  for (const name of last.symptoms) await db.deleteSymptom(state.today, name);
+  await Promise.all([
+    ...(last.cycles ?? []).map((c) => db.deleteCycleEvent(c)),
+    ...(last.symptoms ?? []).map((name) => db.deleteSymptom(state.today, name)),
+    ...(last.deletedCycles ?? []).map((c) => db.insertCycleEvent(c)),
+  ]);
+  if ((last.deletedSymptoms ?? []).length) await db.upsertSymptoms(last.deletedSymptoms);
   if (last.prevIntake.length) {
     const rows = last.prevIntake.map(([key, row]) => {
       if (row) return row;
@@ -695,12 +727,12 @@ async function executeRemove(remove) {
 
 /* ---------- 预览卡确认后的统一落库（chat.js 回调） ---------- */
 async function commitDraft(draft) {
+  const snapshot = { prevIntake: [], symptoms: [], cycles: [], deletedCycles: [], deletedSymptoms: [] };
   let removeMsg = null;
   if (draft.remove) {
-    removeMsg = await executeRemove(draft.remove);
+    removeMsg = await executeRemove(draft.remove, snapshot);
   }
 
-  const snapshot = { prevIntake: [], symptoms: [], cycles: [] };
   if (draft.intake.length) {
     snapshot.prevIntake = draft.intake.map((i) => {
       const key = `${i.supplement}|${i.slot}`;
@@ -721,7 +753,11 @@ async function commitDraft(draft) {
     snapshot.cycles.push(c);
     await db.insertCycleEvent(c);
   }
-  if (draft.intake.length || draft.symptoms.length || draft.cycles.length) {
+  // 有新增或有被删的快照才更新"刚刚那条"指针（"撤销"本身不算，免得撤销套娃）
+  if (
+    draft.intake.length || draft.symptoms.length || draft.cycles.length ||
+    snapshot.deletedCycles.length || snapshot.deletedSymptoms.length
+  ) {
     state.lastCommit = snapshot;
   }
 

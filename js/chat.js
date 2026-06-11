@@ -121,13 +121,17 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, o
 
       if (draft.remove) {
         card.appendChild(sectionTitle('删除'));
-        if (draft.remove.what === 'cycle_events') {
-          // 按条删过去的周期记录：每行可单独点 ✕ 从删除列表里剔除
+        const itemLabel = {
+          cycle_events: (it) => `删掉 ${EVENT_LABELS[it.event]} · ${it.date}`,
+          symptom_entries: (it) => `删掉症状 ${it.symptom} · ${it.date}`,
+        }[draft.remove.what];
+        if (itemLabel) {
+          // 按条删过去的记录：每行可单独点 ✕ 从删除列表里剔除
           draft.remove.items.forEach((it, idx) => {
             const row = document.createElement('button');
             row.className = 'preview-row';
             row.innerHTML = `<span class="mark off-mark">✕</span><span class="pname"></span><span class="remove">✕</span>`;
-            row.querySelector('.pname').textContent = `删掉 ${EVENT_LABELS[it.event]} · ${it.date}`;
+            row.querySelector('.pname').textContent = itemLabel(it);
             row.addEventListener('click', (e) => {
               if (e.target.classList.contains('remove')) {
                 draft.remove.items.splice(idx, 1);
@@ -225,8 +229,9 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, o
       cancel.addEventListener('click', () => card.remove());
       const confirm = document.createElement('button');
       confirm.className = 'btn primary';
+      const hasAdds = draft.intake.length || draft.symptoms.length || draft.cycles.length;
       confirm.textContent = draft.remove
-        ? '确认删除'
+        ? hasAdds ? '确认修改' : '确认删除' // 又删又记（如"9号那条改成果冻"）是修改
         : isFullDefault()
           ? '确认按默认记录'
           : '确认记录';

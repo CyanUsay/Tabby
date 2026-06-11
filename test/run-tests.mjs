@@ -377,6 +377,18 @@ test('sanitizeRemove：cycle_events 过滤编造项、去重、空则整体置 n
   assert.equal(sanitizeRemove({ what: 'cycle_events', items: [{ event: 'x', date: 'y' }] }), null);
   assert.deepEqual(sanitizeRemove({ what: 'last' }), { what: 'last' });
 });
+test('sanitizeRemove：symptom_entries 校验日期与症状名', () => {
+  const r = sanitizeRemove({
+    what: 'symptom_entries',
+    items: [
+      { date: '2026-06-09', symptom: ' 胸胀 ' },
+      { date: '2026-06-09', symptom: '胸胀' }, // trim 后重复
+      { date: '6/9', symptom: '头痛' }, // 非法日期
+      { date: '2026-06-09', symptom: '' }, // 空名
+    ],
+  });
+  assert.deepEqual(r, { what: 'symptom_entries', items: [{ date: '2026-06-09', symptom: '胸胀' }] });
+});
 test('又删又记的矛盾条目：删除优先，剔除重复新增', () => {
   const remove = { what: 'cycle_events', items: [{ event: 'pms_start', date: '2026-06-09' }] };
   const cycles = [
@@ -392,6 +404,9 @@ test('删除意图防火墙：话里没有删除字眼时丢弃 remove', () => {
   assert.deepEqual(removeRequiresIntent(rm, '把9号的出血删掉'), rm);
   assert.deepEqual(removeRequiresIntent(rm, '搞错了，今天不是经期'), rm);
   assert.deepEqual(removeRequiresIntent(rm, '撤销刚才那条'), rm);
+  assert.deepEqual(removeRequiresIntent(rm, '把那条移除'), rm);
+  assert.deepEqual(removeRequiresIntent(rm, '说错了，9号没出血'), rm);
+  assert.deepEqual(removeRequiresIntent(rm, '抹掉6号的'), rm);
   assert.equal(removeRequiresIntent(null, '随便说点什么'), null);
 });
 
