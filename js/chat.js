@@ -6,6 +6,7 @@ import {
   sanitizeSymptoms,
   sanitizeCycles,
   sanitizeRemove,
+  removeRequiresIntent,
   dropContradictoryCycles,
   AiError,
 } from './ai.js';
@@ -80,6 +81,7 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, o
       cycles: sanitizeCycles(result.cycle),
       remove: sanitizeRemove(result.remove),
     };
+    draft.remove = removeRequiresIntent(draft.remove, text); // 没说删就不许删
     draft.cycles = dropContradictoryCycles(draft.cycles, draft.remove);
     if (!draft.intake.length && !draft.symptoms.length && !draft.cycles.length && !draft.remove) {
       addBubble(logEl, 'tabby', '没听懂主人想记什么喵…再说具体一点好不好 ฅ(•ㅅ•)ฅ');

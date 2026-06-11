@@ -86,6 +86,13 @@ export function sanitizeCycles(cycle) {
   return out;
 }
 
+// 删除意图防火墙：模型会被上文的"删除"对话污染，把纯记录话术（"前天开始流血"）
+// 也翻成 remove。用户话里没有任何删除/纠错字眼 → remove 一律丢弃。
+export function removeRequiresIntent(remove, userText) {
+  if (!remove) return null;
+  return /[删撤]|清除|取消|搞错|记错|弄错|去掉|不算/.test(userText) ? remove : null;
+}
+
 // 模型偶发把"要删的条目"同时又写进 cycle（又删又记，先删后记等于白删）。
 // 删除优先，剔除完全相同（事件+日期）的矛盾新增。
 export function dropContradictoryCycles(cycles, remove) {
