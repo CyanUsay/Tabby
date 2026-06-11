@@ -372,8 +372,16 @@ function initDoneButton() {
     requestAnimationFrame(() => (arc.style.strokeDashoffset = 0));
     timer = setTimeout(async () => {
       reset();
-      await markAllDone();
-      celebrate();
+      // 已全选时再长按一次 = 取消全选
+      const total = state.checklist.length;
+      const taken = state.checklist.filter((i) => state.intakeMap.get(intakeKey(i))?.taken).length;
+      if (total > 0 && taken === total) {
+        await markAll(false);
+        celebrate('取消全选啦喵', false);
+      } else {
+        await markAll(true);
+        celebrate('太棒了喵！ฅ^•ﻌ•^ฅ', true);
+      }
     }, HOLD_MS);
   });
   btn.addEventListener('pointerup', reset);
@@ -382,25 +390,28 @@ function initDoneButton() {
   btn.addEventListener('contextmenu', (e) => e.preventDefault()); // 防 iOS 长按弹菜单
 }
 
-async function markAllDone() {
+async function markAll(taken) {
   const items = state.checklist;
   const prev = items.map((i) => [intakeKey(i), state.intakeMap.get(intakeKey(i))]);
-  const rows = items.map((i) => intakeRowOf(i, true));
+  const rows = items.map((i) => intakeRowOf(i, taken));
   rows.forEach((r, idx) => state.intakeMap.set(intakeKey(items[idx]), r));
   renderList();
   renderStats();
   await persistIntake(rows, prev);
 }
 
-// 完成反馈：小猫 logo 像盖章一样砸在按钮上 + 气泡"太棒了喵" + 震动
+// 完成反馈：小猫 logo 像盖章一样砸在按钮上 + 气泡 + 震动
 // （iOS Safari 不支持网页震动 API，iPhone 上以盖章顿挫动画作为反馈）
-function celebrate() {
+function celebrate(text, stamp) {
   navigator.vibrate?.(80);
   const btn = $('done-btn');
-  btn.classList.remove('stamp-in');
-  void btn.offsetWidth; // 重置动画
-  btn.classList.add('stamp-in');
+  if (stamp) {
+    btn.classList.remove('stamp-in');
+    void btn.offsetWidth; // 重置动画
+    btn.classList.add('stamp-in');
+  }
   const say = $('done-say');
+  say.textContent = text;
   say.hidden = false;
   setTimeout(() => (say.hidden = true), 2000);
 }
@@ -414,17 +425,20 @@ function initChatCat() {
   let wag = null;
   let frame = 0;
 
+  const listen = $('chat-listen');
   const sleep = () => {
     if (wag) clearInterval(wag);
     wag = null;
     cat.textContent = SLEEP;
     cat.classList.remove('awake');
     divider.classList.remove('awake');
+    listen.hidden = true;
   };
   const wake = () => {
     if (wag) return;
     cat.classList.add('awake');
     divider.classList.add('awake');
+    listen.hidden = false;
     cat.textContent = FRAMES[0];
     wag = setInterval(() => {
       frame = 1 - frame;
