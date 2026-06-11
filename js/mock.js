@@ -71,7 +71,9 @@ export function mockParse(text, context) {
 
       // 撤销/删除
       if (text.includes('删掉') || text.includes('删除') || text.includes('撤销')) {
-        if (text.includes('症状')) result.remove = { what: 'symptoms_today' };
+        const sym = ['胸胀', '头痛', '睡眠障碍', '情绪低落'].find((s) => text.includes(s));
+        if (sym) result.remove = { what: 'symptom_entries', items: [{ date: context.date, symptom: sym }] };
+        else if (text.includes('症状')) result.remove = { what: 'symptoms_today' };
         else if (text.includes('整个') && (text.includes('经期') || text.includes('月经'))) {
           // 模拟真 prompt：从 context.cycleEvents 里挑出经期相关条目逐条删
           const items = (context.cycleEvents ?? []).filter((e) =>
