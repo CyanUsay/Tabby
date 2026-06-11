@@ -90,11 +90,11 @@ export function deriveState(events, todayStr, cfg) {
 
   // ---- 排卵：果冻连续段（严格逐日连续）的最后一天 ----
   const jellies = dates(events, todayStr, 'jelly');
+  const jellyRuns = jellies.length ? runs(jellies, 0) : [];
   let ovulationDate = null;
   let daysSinceOvulation = null;
   let predictedPeriod = null; // 排卵日 + 黄体期 ≈ 预测经期（周期不准时唯一可靠的预估）
-  if (jellies.length) {
-    const jellyRuns = runs(jellies, 0);
+  if (jellyRuns.length) {
     const lastRun = jellyRuns[jellyRuns.length - 1];
     ovulationDate = lastRun[lastRun.length - 1];
     // 经期已经来了 → 这次排卵计数完成使命，不再显示
@@ -105,9 +105,27 @@ export function deriveState(events, todayStr, cfg) {
     }
   }
 
+  // ---- 阶段（状态行展示）：经期 > 排卵期 > 黄体期 > 正常 ----
+  // 排卵期 = 连续 ≥2 天果冻的段内；段一结束立刻进入黄体期，
+  // 直到经期到来（上限 16 天兜底）。
+  let phase = mode === 'period' ? 'period' : 'normal';
+  if (mode !== 'period') {
+    const runs2 = jellyRuns.filter((r) => r.length >= 2);
+    if (runs2.length) {
+      const r2 = runs2[runs2.length - 1];
+      const end2 = r2[r2.length - 1];
+      const consumed2 = periodStart && periodStart >= end2;
+      if (!consumed2 && todayStr >= r2[0]) {
+        const since = diffDays(end2, todayStr);
+        if (since <= 0) phase = 'ovulation';
+        else if (since <= 16) phase = 'luteal';
+      }
+    }
+  }
+
   return {
     mode, dayN, periodStart, daysSinceEnd,
-    ovulationDate, daysSinceOvulation, predictedPeriod, spottingToday,
+    ovulationDate, daysSinceOvulation, predictedPeriod, spottingToday, phase,
   };
 }
 

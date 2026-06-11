@@ -10,8 +10,9 @@ export class AiError extends Error {
   }
 }
 
-// context = { date, mode, checklist, fixedSymptoms }
-// 返回 { intake, symptoms, cycle, clarify }
+// context = { date, mode, checklist, fixedSymptoms, history }
+// history = 最近几轮对话（让"都有"这类省略表达能被正确理解）
+// 返回 { intake, symptoms, cycle, remove, clarify }
 export async function parseUtterance(userText, context) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 30000);
@@ -23,7 +24,7 @@ export async function parseUtterance(userText, context) {
         'Content-Type': 'application/json',
         apikey: SUPABASE_ANON_KEY,
       },
-      body: JSON.stringify({ userText, context }),
+      body: JSON.stringify({ userText, context, history: context.history ?? [] }),
       signal: controller.signal,
     });
   } catch (e) {
@@ -67,12 +68,22 @@ export function sanitizeSymptoms(symptoms, fixedSymptoms) {
 
 export const CYCLE_EVENTS = ['period_start', 'period_end', 'pms_start', 'jelly', 'bleed_light', 'bleed_heavy'];
 
-// 规整 cycle：只接受合法事件名 + YYYY-MM-DD
-export function sanitizeCycle(cycle) {
-  if (!cycle || typeof cycle !== 'object') return null;
-  if (!CYCLE_EVENTS.includes(cycle.event)) return null;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(cycle.date || '')) return null;
-  return { event: cycle.event, date: cycle.date };
+// 规整 cycle：只接受合法事件名 + YYYY-MM-DD；支持单个或数组（补记多天），去重限量
+export function sanitizeCycles(cycle) {
+  const list = Array.isArray(cycle) ? cycle : cycle ? [cycle] : [];
+  const seen = new Set();
+  const out = [];
+  for (const c of list) {
+    if (!c || typeof c !== 'object') continue;
+    if (!CYCLE_EVENTS.includes(c.event)) continue;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(c.date || '')) continue;
+    const key = `${c.event}|${c.date}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ event: c.event, date: c.date });
+    if (out.length >= 14) break;
+  }
+  return out;
 }
 
 // 规整 remove（撤销/删除指令）：只接受白名单动作

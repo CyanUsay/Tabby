@@ -32,7 +32,7 @@ ${JSON.stringify(ctx.checklist, null, 0)}
 {
   "intake": [ {"supplement":"VC","slot":"lunch","taken":true}, ... ],
   "symptoms": [ {"symptom":"胸胀","severity":2,"is_custom":false}, ... ],
-  "cycle": null 或 {"event":"...","date":"YYYY-MM-DD"},
+  "cycle": null 或 {"event":"...","date":"YYYY-MM-DD"} 或 多天补记时的数组 [{...},{...}],
   "remove": null 或 {"what":"last"|"cycle_today"|"symptoms_today"},
   "clarify": null 或 "需要向用户澄清的问题"
 }
@@ -53,6 +53,13 @@ ${JSON.stringify(ctx.checklist, null, 0)}
   · "刚刚那条删掉/撤销/记错了删掉" → {"what":"last"}
   · "搞错了，今天不是经期/把今天的周期记录删了" → {"what":"cycle_today"}
   · "把今天记的症状都删了" → {"what":"symptoms_today"}
+- 补记多天：用户可能一次报多天，cycle 用数组逐天生成：
+  · "9号和10号都有少量出血" → 两条 bleed_light（date 取今天所在月份的 9 日与 10 日；若该日期晚于今天则取上个月）
+  · "昨天" = ${ctx.date} 减 1 天；"前天" = 减 2 天；"这两天有果冻" = 昨天和今天各一条 jelly
+  · "连续三天有果冻" = 今天往前数三天各一条 jelly
+- 结合对话上文理解省略回答：若上一轮你在澄清（如问"哪几天"），用户的简短回答
+  （"都有"/"是的"/"昨天"）要按上文补全成完整含义，再生成对应记录；
+  绝不要把这类回答误解析成补剂打卡
 - 识别到周期观察/事件表达填 cycle（event 只能取下列几种），否则 null：
   · "来例假了/月经来了/血量是经期的量/量多了" → {"event":"bleed_heavy","date":"${ctx.date}"}
   · "有点血/见红/少量出血"（少量、不确定是不是经期）→ {"event":"bleed_light","date":"${ctx.date}"}
@@ -82,7 +89,12 @@ function normalizeResult(r: unknown): Record<string, unknown> {
   };
 }
 
-async function callDeepSeek(apiKey: string, system: string, userText: string) {
+async function callDeepSeek(
+  apiKey: string,
+  system: string,
+  userText: string,
+  history: Array<{ role: string; content: string }>,
+) {
   const res = await fetch(DEEPSEEK_URL, {
     method: 'POST',
     headers: {
@@ -96,6 +108,7 @@ async function callDeepSeek(apiKey: string, system: string, userText: string) {
       max_tokens: 1500, // json mode 下 token 不足会截断/返回空 content，给足余量
       messages: [
         { role: 'system', content: system },
+        ...history,
         { role: 'user', content: userText },
       ],
     }),
@@ -125,12 +138,21 @@ Deno.serve(async (req) => {
   if (!apiKey) return json(500, { ok: false, error: 'missing_api_key' });
 
   let userText: string, context: Context;
+  let history: Array<{ role: string; content: string }> = [];
   try {
     const body = await req.json();
     userText = String(body.userText ?? '').trim();
     context = body.context;
     if (!userText || !context?.date || !context?.mode || !Array.isArray(context?.checklist)) {
       return json(400, { ok: false, error: 'bad_request' });
+    }
+    // 最近几轮对话：让"都有"这类省略回答能接上文
+    if (Array.isArray(body.history)) {
+      history = body.history
+        .filter((m: { role?: string; content?: string }) =>
+          (m?.role === 'user' || m?.role === 'assistant') && typeof m?.content === 'string')
+        .slice(-6)
+        .map((m: { role: string; content: string }) => ({ role: m.role, content: m.content.slice(0, 400) }));
     }
   } catch {
     return json(400, { ok: false, error: 'bad_request' });
@@ -139,7 +161,7 @@ Deno.serve(async (req) => {
   const system = buildSystemPrompt(context);
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const result = await callDeepSeek(apiKey, system, userText);
+      const result = await callDeepSeek(apiKey, system, userText, history);
       return json(200, { ok: true, result });
     } catch (e) {
       const status = (e as { status?: number }).status;

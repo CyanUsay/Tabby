@@ -231,3 +231,32 @@ test('经期来了之后预测清空', () => {
 });
 
 console.log(`\n共 ${passed} tests passed`);
+
+console.log('cycle.js（阶段四分类）');
+test('连续两天果冻 → 排卵期；段结束次日立即黄体期', () => {
+  const events = [
+    { event: 'jelly', date: '2026-06-06' },
+    { event: 'jelly', date: '2026-06-07' },
+  ];
+  assert.equal(deriveState(events, '2026-06-06', cfg).phase, 'normal'); // 第一天还看不出连续
+  assert.equal(deriveState(events, '2026-06-07', cfg).phase, 'ovulation'); // 第二天确认连续 → 排卵期
+  assert.equal(deriveState(events, '2026-06-08', cfg).phase, 'luteal'); // 紧接黄体期
+  assert.equal(deriveState(events, '2026-06-23', cfg).phase, 'luteal'); // 第 16 天仍黄体
+  assert.equal(deriveState(events, '2026-06-24', cfg).phase, 'normal'); // 超上限回正常
+});
+test('单日果冻不构成排卵期', () => {
+  const events = [{ event: 'jelly', date: '2026-06-07' }];
+  assert.equal(deriveState(events, '2026-06-07', cfg).phase, 'normal');
+  assert.equal(deriveState(events, '2026-06-09', cfg).phase, 'normal');
+});
+test('经期覆盖一切阶段；经期来过后黄体期清零', () => {
+  const events = [
+    { event: 'jelly', date: '2026-06-05' },
+    { event: 'jelly', date: '2026-06-06' },
+    { event: 'bleed_heavy', date: '2026-06-10' },
+  ];
+  assert.equal(deriveState(events, '2026-06-10', cfg).phase, 'period');
+  assert.equal(deriveState(events, '2026-06-16', cfg).phase, 'normal'); // 经期结束后不回黄体
+});
+
+console.log(`\n合计 ${passed} tests passed`);
