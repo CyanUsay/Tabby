@@ -132,12 +132,11 @@ header.topbar {
   gap: 8px;
 }
 
-/* 顶栏状态胶囊：正常 / 排卵期 / 黄体期 / PMS 期 / 经期 Day N */
+/* 顶栏状态胶囊：🩸经期/💜PMS/🔅黄体期 Day N；正常与排卵期不显示。
+   配色与用户对话泡泡一致 */
 .mode-chip {
-  background: var(--glass);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
-  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--accent) 38%, transparent);
+  color: var(--text);
   height: 44px;
   display: inline-flex;
   align-items: center;
@@ -146,7 +145,10 @@ header.topbar {
   font-size: 13.5px;
   font-weight: 700;
   white-space: nowrap;
-  box-shadow: var(--shadow-soft);
+}
+
+.mode-chip[hidden] {
+  display: none;
 }
 
 .theme-toggle {
@@ -228,7 +230,7 @@ header.topbar {
   position: absolute;
   left: 0;
   right: 0;
-  top: 4px;
+  top: 6px; /* 与日期数字垂直居中对齐 */
   height: 22px;
 }
 
@@ -266,6 +268,17 @@ header.topbar {
   right: 4px;
   border-top-right-radius: 11px;
   border-bottom-right-radius: 11px;
+}
+
+/* 排卵日（推算落定后）：日期下的橙黄色小圈圈 */
+.bw-day .ovu-mark {
+  display: block;
+  width: 8px;
+  height: 8px;
+  margin: 1px auto 0;
+  border: 2px solid #f0a95c;
+  border-radius: 50%;
+  box-sizing: border-box;
 }
 
 /* 下划线（出血/果冻观察）：相邻有记录的日子连成一条线 */
