@@ -2,13 +2,13 @@
 // Supabase 拉取失败时降级为只读（本地清单仍可见）。
 
 import { cycleConfig, PMS_MARKER_SYMPTOMS } from './config.js';
-import { appToday, weekOf, addDays } from './dates.js';
+import { appToday, weekOf, addDays, diffDays } from './dates.js';
 import { getChecklist } from './protocol.js';
 import { deriveState } from './cycle.js';
 import * as realDb from './db.js';
 import { parseUtterance } from './ai.js';
 import { renderChecklist, intakeKey } from './checklist.js';
-import { renderSymptoms } from './symptoms.js';
+import { renderSymptoms, severityLevel, severityLevelLabel } from './symptoms.js';
 import { initChat, addBubble } from './chat.js';
 import { makeMockDb, mockParse } from './mock.js';
 
@@ -24,6 +24,7 @@ const state = {
   checklist: [],
   intakeMap: new Map(),
   todaySymptoms: [],
+  rangeSymptoms: new Map(), // 日历可见范围 date → 当日症状（PMS 色带浓度用）
   fixedSymptoms: [],
   cycleEvents: [],
   degraded: false,
@@ -130,11 +131,12 @@ function renderCalendar() {
     cell.className =
       'bw-day' + (d === state.today ? ' today' : '') + (d > state.today ? ' future' : '');
 
-    // 荧光笔涂抹（经期/PMS）
+    // 荧光笔涂抹（经期/PMS）；PMS 浓度跟随当日症状严重度（平稳50/轻75/明显100%）
     if (mode) {
       const hl = document.createElement('span');
       const e = runEdges(i, d, (x) => modeOf(x) === mode);
-      hl.className = `hl ${mode}${e.start ? ' run-start' : ''}${e.end ? ' run-end' : ''}`;
+      const sev = mode === 'pms' ? ` sev-${severityLevel(state.rangeSymptoms.get(d))}` : '';
+      hl.className = `hl ${mode}${sev}${e.start ? ' run-start' : ''}${e.end ? ' run-end' : ''}`;
       cell.appendChild(hl);
     }
 
@@ -163,26 +165,56 @@ function renderCalendar() {
   });
 }
 
-/* ---------- 统计 + 打卡按钮状态 ---------- */
-function renderStats() {
-  const { mode, dayN, daysSinceEnd, daysSinceOvulation, predictedPeriod, phase } = state.modeInfo;
-  $('stat-mode').textContent =
+/* ---------- 顶栏状态胶囊 ---------- */
+function renderTopbarMode() {
+  const { mode, dayN, phase } = state.modeInfo;
+  $('topbar-mode').textContent =
     mode === 'period' ? `经期 Day ${dayN}`
     : mode === 'pms' ? 'PMS 期'
     : phase === 'ovulation' ? '排卵期'
     : phase === 'luteal' ? '黄体期'
     : '正常';
+}
 
-  // 经期结束后 / 排卵后：只显示更近的那个
-  if (daysSinceOvulation !== null && (daysSinceEnd === null || daysSinceOvulation <= daysSinceEnd)) {
+/* ---------- 统计 + 打卡按钮状态 ---------- */
+// 三个统计位都可点按切换显示内容，选择记在 localStorage
+const statView = {
+  get: (key) => localStorage.getItem(`tabby-stat-${key}`) === '1',
+  toggle: (key) => localStorage.setItem(`tabby-stat-${key}`, statView.get(key) ? '0' : '1'),
+};
+
+// "排卵后第 N 天"从排卵日第二天起才有得看（之前点了也不切换）
+function ovulationViewReady() {
+  const { daysSinceOvulation } = state.modeInfo;
+  return daysSinceOvulation !== null && daysSinceOvulation >= 1;
+}
+
+function renderStats() {
+  const { daysSinceEnd, ovulationPending, daysSinceOvulation, predictedPeriod } = state.modeInfo;
+
+  // 栏一：距上次经期 / 排卵后第 N 天
+  if (ovulationViewReady() && statView.get('recent')) {
     $('stat-recent-label').textContent = '排卵后';
-    $('stat-recent').textContent = daysSinceOvulation === 0 ? '推测今天' : `${daysSinceOvulation} 天`;
+    $('stat-recent').textContent = `第 ${daysSinceOvulation} 天`;
   } else {
     $('stat-recent-label').textContent = '经期结束后';
     $('stat-recent').textContent = daysSinceEnd === null ? '—' : `${daysSinceEnd} 天`;
   }
-  $('stat-predict').textContent = predictedPeriod ? `${md(predictedPeriod)} 前后` : '—';
-  $('stat-symptoms').textContent = `${state.todaySymptoms.filter((s) => s.severity > 0).length} 项`;
+
+  // 栏二：预测经期窗口日期 / 还有 N 天
+  if (predictedPeriod) {
+    const n = diffDays(state.today, predictedPeriod.start);
+    $('stat-predict').textContent = statView.get('predict')
+      ? n > 0 ? `还有 ${n} 天` : '就这几天'
+      : `${md(predictedPeriod.start)}~${md(predictedPeriod.end)}`;
+  } else {
+    $('stat-predict').textContent = ovulationPending ? '排卵中…' : '—';
+  }
+
+  // 栏三：今日症状 N 项 / 严重度三档
+  $('stat-symptoms').textContent = statView.get('symptoms')
+    ? severityLevelLabel(severityLevel(state.todaySymptoms))
+    : `${state.todaySymptoms.filter((s) => s.severity > 0).length} 项`;
 
   const total = state.checklist.length;
   const taken = state.checklist.filter((i) => state.intakeMap.get(intakeKey(i))?.taken).length;
@@ -205,8 +237,25 @@ function renderList() {
   });
 }
 
+function initStatToggles() {
+  $('stat-recent-btn').addEventListener('click', () => {
+    if (!ovulationViewReady()) return;
+    statView.toggle('recent');
+    renderStats();
+  });
+  $('stat-predict-btn').addEventListener('click', () => {
+    statView.toggle('predict');
+    renderStats();
+  });
+  $('stat-symptoms-btn').addEventListener('click', () => {
+    statView.toggle('symptoms');
+    renderStats();
+  });
+}
+
 function renderAll() {
   renderCalendar();
+  renderTopbarMode();
   renderStats();
   renderSymptomsCount();
   renderList();
@@ -228,9 +277,12 @@ function recomputeMode() {
   state.checklist = getChecklist(state.modeInfo.mode);
 }
 
-// 周期事件确认后，用一句话反馈推算结果（回溯效果在这里变得可见）
+// 周期事件确认后，用一句话反馈推算结果（三层判定的结果在这里变得可见）
 function cycleFeedback(cycles) {
-  const { mode, dayN, periodStart, daysSinceOvulation, predictedPeriod, spottingToday, phase } = state.modeInfo;
+  const { mode, dayN, periodStart, ovulationPending, predictedPeriod, spottingToday, suspectBleed, phase } = state.modeInfo;
+  const windowTail = predictedPeriod
+    ? `照黄体期推算，月经大约 ${md(predictedPeriod.start)}~${md(predictedPeriod.end)} 之间来喵`
+    : '';
   if (cycles.length > 1) {
     const tail =
       mode === 'period' ? `现在是经期 Day ${dayN}（从 ${md(periodStart)} 起算）`
@@ -240,25 +292,35 @@ function cycleFeedback(cycles) {
     return `补记好了喵！${cycles.length} 条都记上了，状态重新算过。${tail} (=^･ω･^=)`;
   }
   const event = cycles[0].event;
-  if (event === 'bleed_heavy' || event === 'period_start') {
+  if (event === 'period_start') {
     if (mode === 'period') {
       return dayN > 1
-        ? `记好啦喵！主人的经期从 ${md(periodStart)} 起算（前几天的出血并进来了），今天 Day ${dayN} (=^･ω･^=)`
+        ? `记好啦喵！主人说了算，经期从 ${md(periodStart)} 起算，今天 Day ${dayN} (=^･ω･^=)`
         : '记好啦喵！经期 Day 1，补剂清单切换好了，主人多保重 (=^･ω･^=)';
     }
+  }
+  if (event === 'bleed_heavy') {
+    if (mode === 'period') {
+      return `记好啦喵！这段出血判定为经期，今天 Day ${dayN}（从 ${md(periodStart)} 起算）(=^･ω･^=)`;
+    }
+    return suspectBleed
+      ? '记好啦喵～这次出血有点突然，Tabby 待会儿想和主人确认一下是不是月经喵 ฅ(•ㅅ•)ฅ'
+      : '记好啦喵～先记为出血观察；要是明天还在出血，会自动判成经期的喵 ฅ(•ㅅ•)ฅ';
   }
   if (event === 'bleed_light') {
     return mode === 'period'
       ? `记好啦喵！这段出血并入经期，今天 Day ${dayN} (=^･ω･^=)`
       : spottingToday
-        ? '记好啦喵～暂记为不正出血；要是之后血量上来，Tabby 会自动回溯并入经期的喵 ฅ(•ㅅ•)ฅ'
+        ? '记好啦喵～暂记为孤立少量出血；要是之后血量上来，Tabby 会自动重新判断的喵 ฅ(•ㅅ•)ฅ'
         : '记好啦喵 ✓';
   }
+  if (event === 'not_period') {
+    return '明白了喵，这次出血不算月经，记成孤立出血了。主人要多留意身体喵 ฅ(•ㅅ•)ฅ';
+  }
   if (event === 'jelly') {
-    const tail = predictedPeriod ? `照黄体期推算，月经大约 ${md(predictedPeriod)} 前后来喵` : '';
-    return daysSinceOvulation === 0
-      ? `记好啦喵～排卵日暂记今天，连续报告会自动顺延。${tail} ฅ^•ﻌ•^ฅ`
-      : `记好啦喵 ✓ ${tail}`;
+    return ovulationPending
+      ? '记好啦喵～果冻段还在继续，等黏液消退排卵日会自动落定（=段末次日）喵 ฅ^•ﻌ•^ฅ'
+      : `记好啦喵 ✓ ${windowTail}`;
   }
   if (event === 'pms_start') return '记好啦喵！已进入 PMS 模式，B6 和镁都加量了，主人请多照顾自己喵 (=ↀωↀ=)';
   if (event === 'period_end') return '记好啦喵！经期结束，清单回到日常，主人辛苦了喵 ฅ^•ﻌ•^ฅ';
@@ -359,6 +421,7 @@ async function onLogSymptom(symptom, severity, isCustom) {
     if (isCustom) await db.bumpSymptomCatalog(symptom).catch(() => {});
   }
   state.todaySymptoms = await db.fetchTodaySymptoms(state.today);
+  state.rangeSymptoms.set(state.today, state.todaySymptoms);
   renderAll();
   maybePromptPms();
 }
@@ -518,6 +581,75 @@ function maybePromptPms() {
   $('chat-log').appendChild(card);
 }
 
+/* ---------- 疑似不正出血询问 ---------- */
+// 推算器对两类出血不自动下结论（孤立单日经期量 / 经期刚结束又出血），
+// 弹卡问主人；答案落 period_start / not_period，"先不喵"按疑点日期永久静音。
+function maybePromptSuspectBleed() {
+  const existing = document.getElementById('bleed-ask');
+  const s = state.modeInfo.suspectBleed;
+  const hit =
+    !state.degraded && s && localStorage.getItem('tabby-bleed-dismissed') !== s.date;
+  if (!hit) {
+    existing?.remove(); // 疑点已被宣告解决/静音 → 撤掉残留的询问卡
+    return;
+  }
+  if (existing) return;
+
+  const card = document.createElement('div');
+  card.id = 'bleed-ask';
+  card.className = 'preview-card';
+  const text = document.createElement('div');
+  text.className = 'pms-ask-text';
+  text.textContent =
+    s.reason === 'post_period'
+      ? `主人，经期刚结束没几天，${md(s.date)} 又记到出血了喵…这是新一次月经吗？ฅ(•ㅅ•)ฅ`
+      : `主人，${md(s.date)} 那天孤零零一次经期量出血，离排卵窗口和上次经期都有点远喵…这是月经吗？ฅ(•ㅅ•)ฅ`;
+  const actions = document.createElement('div');
+  actions.className = 'preview-actions';
+
+  const answer = async (event, reply) => {
+    try {
+      await db.insertCycleEvent({ event, date: s.date });
+      state.cycleEvents = await db.fetchCycleEvents();
+      recomputeMode();
+      renderAll();
+      card.remove();
+      addBubble($('chat-log'), 'tabby', reply());
+      maybePromptSuspectBleed(); // 可能还有别的疑点
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const later = document.createElement('button');
+  later.className = 'btn ghost';
+  later.textContent = '先不喵';
+  later.addEventListener('click', () => {
+    localStorage.setItem('tabby-bleed-dismissed', s.date);
+    card.remove();
+  });
+  const no = document.createElement('button');
+  no.className = 'btn ghost';
+  no.textContent = '不是月经';
+  no.addEventListener('click', () =>
+    answer('not_period', () => '明白了喵，记成孤立出血。不正出血要多留意，主人保重身体喵 ฅ(•ㅅ•)ฅ')
+  );
+  const yes = document.createElement('button');
+  yes.className = 'btn primary';
+  yes.textContent = '是月经';
+  yes.addEventListener('click', () =>
+    answer('period_start', () => {
+      const { dayN, periodStart } = state.modeInfo;
+      return dayN
+        ? `好的喵！经期从 ${md(periodStart)} 起算，今天 Day ${dayN}，清单切换好了 (=^･ω･^=)`
+        : '好的喵！记上了 (=^･ω･^=)';
+    })
+  );
+  actions.append(later, no, yes);
+  card.append(text, actions);
+  $('chat-log').appendChild(card);
+}
+
 /* ---------- 删除/撤销 ---------- */
 async function executeRemove(remove) {
   if (remove.what === 'symptoms_today') {
@@ -587,9 +719,11 @@ async function commitDraft(draft) {
   state.cycleEvents = events;
   state.intakeMap = new Map(intakeRows.map((r) => [intakeKey(r), r]));
   state.todaySymptoms = symptomRows;
+  state.rangeSymptoms.set(state.today, symptomRows);
   recomputeMode();
   renderAll();
   maybePromptPms();
+  maybePromptSuspectBleed();
 
   if (removeMsg) return removeMsg;
   return draft.cycles.length ? cycleFeedback(draft.cycles) : null;
@@ -612,18 +746,26 @@ async function boot() {
   renderAll();
   initDoneButton();
   initSymptomsToggle();
+  initStatToggles();
   const onWake = initChatCat();
   try {
-    const [events, fixed, intakeRows, symptomRows] = await Promise.all([
+    const calFrom = weekOf(addDays(state.today, -7))[0]; // 日历可见范围的第一天
+    const [events, fixed, intakeRows, symptomRows, rangeRows] = await Promise.all([
       db.fetchCycleEvents(),
       db.fetchFixedSymptoms(),
       db.fetchTodayIntake(state.today),
       db.fetchTodaySymptoms(state.today),
+      db.fetchSymptomsRange(calFrom, state.today),
     ]);
     state.cycleEvents = events;
     state.fixedSymptoms = fixed.map((r) => r.name);
     state.intakeMap = new Map(intakeRows.map((r) => [intakeKey(r), r]));
     state.todaySymptoms = symptomRows;
+    state.rangeSymptoms = new Map();
+    for (const r of rangeRows) {
+      if (!state.rangeSymptoms.has(r.date)) state.rangeSymptoms.set(r.date, []);
+      state.rangeSymptoms.get(r.date).push(r);
+    }
     recomputeMode();
   } catch (e) {
     state.degraded = true;
@@ -632,6 +774,7 @@ async function boot() {
   }
   renderAll();
   maybePromptPms();
+  maybePromptSuspectBleed();
 
   initChat({
     logEl: $('chat-log'),

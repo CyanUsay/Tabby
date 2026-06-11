@@ -126,6 +126,29 @@ header.topbar {
   margin-top: 2px;
 }
 
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 顶栏状态胶囊：正常 / 排卵期 / 黄体期 / PMS 期 / 经期 Day N */
+.mode-chip {
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--glass-border);
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: 15px;
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: var(--shadow-soft);
+}
+
 .theme-toggle {
   color: var(--text);
   width: 44px;
@@ -213,8 +236,18 @@ header.topbar {
   background: #d6283b;
 }
 
+/* PMS 色带浓度跟随当日症状严重度：平稳 50% / 轻 75% / 明显 100% */
 .bw-day .hl.pms {
   background: #9d8fe0; /* 晚饭后紫 */
+  opacity: 0.5;
+}
+
+.bw-day .hl.pms.sev-mild {
+  opacity: 0.75;
+}
+
+.bw-day .hl.pms.sev-marked {
+  opacity: 1;
 }
 
 /* 色带不透明：垫在数字下面，数字翻白保证可读 */
@@ -480,26 +513,41 @@ header.topbar {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 11px;
+  justify-content: center;
+  gap: 16px;
   border-left: 1px solid var(--line);
   padding-left: 16px;
 }
 
+/* 统计位是按钮：点一下切换该栏显示的数据 */
 .stat {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.12s;
+}
+
+.stat:active {
+  opacity: 0.55;
 }
 
 .stat-icon {
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
-  border-radius: 9px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 14.5px;
 }
 
 .stat-icon[data-tint='pink'] { background: rgba(232, 138, 160, 0.18); color: #d6809a; }
@@ -508,17 +556,17 @@ header.topbar {
 .stat-icon[data-tint='orange'] { background: rgba(240, 169, 92, 0.2); color: #d99547; }
 
 .stat-label {
-  font-size: 12.5px;
+  font-size: 13.5px;
   color: var(--muted);
   flex: 1;
   white-space: nowrap;
 }
 
 .stat-value {
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap; /* "经期 Day 4"永不折行 */
+  white-space: nowrap; /* "6/22~6/29"永不折行 */
 }
 
 /* ---------- 时间线 + 时段卡 ---------- */

@@ -53,6 +53,11 @@ export function fetchTodaySymptoms(date) {
   return rest(`symptom_log?date=eq.${date}&select=*`);
 }
 
+// 日历可见范围的症状（PMS 色带浓度按当日症状严重度变化）
+export function fetchSymptomsRange(from, to) {
+  return rest(`symptom_log?date=gte.${from}&date=lte.${to}&select=date,symptom,severity`);
+}
+
 export function insertCycleEvent({ event, date }) {
   // 同一天重复同一事件直接忽略（unique(event,date)）
   return rest('cycle_event?on_conflict=event,date', {
