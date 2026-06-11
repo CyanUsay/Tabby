@@ -132,7 +132,7 @@ header.topbar {
   gap: 8px;
 }
 
-/* 顶栏状态胶囊：🩸经期/💜PMS/🔅黄体期 Day N；正常与排卵期不显示。
+/* 顶栏状态胶囊：🩸经期/🔅排卵期/💜黄体期 Day N；正常不显示。
    配色与用户对话泡泡一致 */
 .mode-chip {
   background: color-mix(in srgb, var(--accent) 38%, transparent);
@@ -230,7 +230,7 @@ header.topbar {
   position: absolute;
   left: 0;
   right: 0;
-  top: 6px; /* 与日期数字垂直居中对齐 */
+  top: 5px; /* 与日期数字垂直居中对齐 */
   height: 22px;
 }
 
@@ -273,10 +273,10 @@ header.topbar {
 /* 排卵日（推算落定后）：日期下的橙黄色小圈圈 */
 .bw-day .ovu-mark {
   display: block;
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   margin: 1px auto 0;
-  border: 2px solid #f0a95c;
+  border: 1.8px solid #f0a95c;
   border-radius: 50%;
   box-sizing: border-box;
 }

@@ -191,15 +191,20 @@ export function deriveState(events, todayStr, cfg) {
   // 排卵期 = 果冻段第 2 天起到排卵日（段末+1）当天；黄体期紧随其后无空窗，
   // 直到经期到来（距排卵日 lutealMaxDays 天兜底）。
   let phase = mode === 'period' ? 'period' : 'normal';
+  let ovulationDayN = null; // 排卵期第几天（Day1 = 果冻段第 2 天，即阶段起点）
   if (mode !== 'period' && lastJellyRun && !consumed && todayStr >= lastJellyRun[1]) {
-    if (pending || todayStr <= rawOvu) phase = 'ovulation';
-    else if (diffDays(rawOvu, todayStr) <= lutealMaxDays) phase = 'luteal';
+    if (pending || todayStr <= rawOvu) {
+      phase = 'ovulation';
+      ovulationDayN = diffDays(lastJellyRun[1], todayStr) + 1;
+    } else if (diffDays(rawOvu, todayStr) <= lutealMaxDays) {
+      phase = 'luteal';
+    }
   }
 
   return {
     mode, dayN, pmsDayN, periodStart, daysSinceEnd,
     ovulationDate, ovulationPending, daysSinceOvulation, predictedPeriod,
-    spottingToday, suspectBleed, phase,
+    spottingToday, suspectBleed, phase, ovulationDayN,
   };
 }
 
