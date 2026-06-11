@@ -8,6 +8,7 @@ import {
   sanitizeRemove,
   removeRequiresIntent,
   dropContradictoryCycles,
+  dropExistingCycles,
   AiError,
 } from './ai.js';
 import { severityLabel } from './symptoms.js';
@@ -83,8 +84,16 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, o
     };
     draft.remove = removeRequiresIntent(draft.remove, text); // 没说删就不许删
     draft.cycles = dropContradictoryCycles(draft.cycles, draft.remove);
+    const beforeDedupe = draft.cycles.length;
+    draft.cycles = dropExistingCycles(draft.cycles, context.cycleEvents); // 已确认过的不再问
     if (!draft.intake.length && !draft.symptoms.length && !draft.cycles.length && !draft.remove) {
-      addBubble(logEl, 'tabby', '没听懂主人想记什么喵…再说具体一点好不好 ฅ(•ㅅ•)ฅ');
+      addBubble(
+        logEl,
+        'tabby',
+        beforeDedupe > 0
+          ? '这条 Tabby 之前就记好了喵，不用再记一遍 ✓ (=^･ω･^=)'
+          : '没听懂主人想记什么喵…再说具体一点好不好 ฅ(•ㅅ•)ฅ'
+      );
       done();
       return;
     }
