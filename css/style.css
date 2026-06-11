@@ -103,6 +103,15 @@ button {
   border: 1px solid var(--glass-border);
 }
 
+/* 像素字体：只用于 "Tabby is listening…"（latin 子集，3.5KB，随 SW 离线缓存） */
+@font-face {
+  font-family: 'Silkscreen';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/silkscreen.woff2') format('woff2');
+}
+
 /* ---------- 顶栏 ---------- */
 header.topbar {
   max-width: 480px;
@@ -135,7 +144,7 @@ header.topbar {
 /* 顶栏状态胶囊：🩸经期/🔅排卵期/💜黄体期 Day N；正常不显示。
    配色与用户对话泡泡一致 */
 .mode-chip {
-  background: color-mix(in srgb, var(--accent) 38%, transparent);
+  background: color-mix(in srgb, var(--accent) 50%, transparent);
   color: var(--text);
   height: 44px;
   display: inline-flex;
@@ -284,7 +293,7 @@ header.topbar {
 /* 下划线（出血/果冻观察）：相邻有记录的日子连成一条线 */
 .bw-day .uls {
   display: block;
-  margin-top: 3px;
+  margin-top: 2px; /* 下划线上移 1px */
 }
 
 .bw-day .ul {
@@ -992,7 +1001,7 @@ header.topbar {
 }
 
 .bubble.user {
-  background: color-mix(in srgb, var(--accent) 38%, transparent);
+  background: color-mix(in srgb, var(--accent) 50%, transparent);
   color: var(--text);
   margin-left: auto;
   border-bottom-right-radius: 6px;
@@ -1229,7 +1238,7 @@ header.topbar {
   height: 2.5px;
   border-radius: 3px;
   background: var(--divider);
-  margin: 34px 2px 14px;
+  margin: 36px 2px 12px; /* 线和小猫整体下移 2px，下方内容位置不变 */
   transition: background 0.25s;
 }
 
@@ -1261,9 +1270,9 @@ header.topbar {
 }
 
 .chat-listen {
-  font-size: 12px;
-  font-style: italic;
-  letter-spacing: 0.5px;
+  font-family: 'Silkscreen', monospace; /* 像素风 */
+  font-size: 14px;
+  letter-spacing: 1px;
   color: var(--accent);
   animation: fade-in 0.3s ease;
 }

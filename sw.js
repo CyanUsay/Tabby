@@ -1,6 +1,6 @@
 // Tabby service worker · app shell cache-first
 // ⚠️ 改了任何前端文件后必须 bump 这个版本号，否则旧缓存不会更新。
-const CACHE = 'tabby-shell-v27';
+const CACHE = 'tabby-shell-v28';
 
 const SHELL = [
   './',
@@ -18,6 +18,7 @@ const SHELL = [
   './js/symptoms.js',
   './js/chat.js',
   './js/mock.js',
+  './fonts/silkscreen.woff2',
   './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
