@@ -38,6 +38,11 @@ self.addEventListener('activate', (e) => {
   );
 });
 
+// 页面问版本号：回答正在运行的缓存版本（页脚显示用）
+self.addEventListener('message', (e) => {
+  if (e.data === 'version') e.source?.postMessage({ version: CACHE });
+});
+
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   // 只接管 same-origin 的 GET（app shell）。

@@ -505,6 +505,21 @@ function celebrate(text, stamp) {
   setTimeout(() => (say.hidden = true), 2000);
 }
 
+/* ---------- 页脚版本号 ---------- */
+// 问"正在掌管页面的 SW"拿缓存版本——显示的就是实际运行的版本，更新没到位一眼可见
+function initVersionTag() {
+  const el = $('version-tag');
+  if (MOCK || !('serviceWorker' in navigator)) {
+    el.textContent = 'dev';
+    return;
+  }
+  navigator.serviceWorker.addEventListener('message', (e) => {
+    if (e.data?.version) el.textContent = e.data.version.replace('tabby-shell-', '');
+  });
+  const ask = () => navigator.serviceWorker.controller?.postMessage('version');
+  navigator.serviceWorker.ready.then(ask);
+}
+
 /* ---------- 分割线小猫：跟随输入框激活（聚焦=醒+变粉，离开=睡） ---------- */
 function initChatCat() {
   const cat = $('chat-cat');
@@ -798,6 +813,7 @@ async function boot() {
   initDoneButton();
   initSymptomsToggle();
   initStatToggles();
+  initVersionTag();
   const onWake = initChatCat();
   try {
     const calFrom = weekOf(addDays(state.today, -7))[0]; // 日历可见范围的第一天

@@ -1277,6 +1277,18 @@ header.topbar {
   animation: fade-in 0.3s ease;
 }
 
+/* 页脚版本号：极小极淡，确认更新到位用 */
+.version-tag {
+  text-align: center;
+  font-size: 10px;
+  color: var(--faint);
+  opacity: 0.65;
+  margin: 20px 0 2px;
+  font-variant-numeric: tabular-nums;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 /* 未激活：普通玻璃样式；聚焦后变粉色框 */
 .chat-bar input {
   flex: 1;
