@@ -173,14 +173,15 @@ function renderCalendar() {
 }
 
 /* ---------- 顶栏状态胶囊 ----------
-   只在经期/PMS/黄体期显示（正常、排卵期不占顶栏；排卵看日历果冻线和小圈圈） */
+   只在经期/排卵期/黄体期显示 Day N；正常不显示，
+   PMS 也不进胶囊（日历紫色带已表达，黄体期照常显示） */
 function renderTopbarMode() {
-  const { mode, dayN, pmsDayN, daysSinceOvulation, phase } = state.modeInfo;
+  const { mode, dayN, ovulationDayN, daysSinceOvulation, phase } = state.modeInfo;
   const chip = $('topbar-mode');
   const label =
     mode === 'period' ? `🩸 经期 Day ${dayN}`
-    : mode === 'pms' ? `💜 PMS Day ${pmsDayN}`
-    : phase === 'luteal' ? `🔅 黄体期 Day ${daysSinceOvulation}`
+    : phase === 'ovulation' ? `🔅 排卵期 Day ${ovulationDayN}`
+    : phase === 'luteal' ? `💜 黄体期 Day ${daysSinceOvulation}`
     : null;
   chip.hidden = !label;
   chip.textContent = label ?? '';
