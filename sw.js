@@ -1,6 +1,6 @@
 // Tabby service worker · app shell cache-first
 // ⚠️ 改了任何前端文件后必须 bump 这个版本号，否则旧缓存不会更新。
-const CACHE = 'tabby-shell-v28';
+const CACHE = 'tabby-shell-v29';
 
 const SHELL = [
   './',
@@ -18,7 +18,7 @@ const SHELL = [
   './js/symptoms.js',
   './js/chat.js',
   './js/mock.js',
-  './fonts/silkscreen.woff2',
+  './fonts/press-start-2p.woff2',
   './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -36,6 +36,11 @@ self.addEventListener('activate', (e) => {
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
+});
+
+// 页面问版本号：回答正在运行的缓存版本（页脚显示用）
+self.addEventListener('message', (e) => {
+  if (e.data === 'version') e.source?.postMessage({ version: CACHE });
 });
 
 self.addEventListener('fetch', (e) => {

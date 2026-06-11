@@ -103,13 +103,14 @@ button {
   border: 1px solid var(--glass-border);
 }
 
-/* 像素字体：只用于 "Tabby is listening…"（latin 子集，3.5KB，随 SW 离线缓存） */
+/* 像素字体（街机 8-bit 风）：用于顶栏 TABBY 和 "Tabby is listening…"
+   （latin 子集 4.7KB，随 SW 离线缓存） */
 @font-face {
-  font-family: 'Silkscreen';
+  font-family: 'Press Start 2P';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('../fonts/silkscreen.woff2') format('woff2');
+  src: url('../fonts/press-start-2p.woff2') format('woff2');
 }
 
 /* ---------- 顶栏 ---------- */
@@ -123,8 +124,9 @@ header.topbar {
 }
 
 .app-title {
-  font-size: 13px;
-  font-weight: 700;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  font-weight: 400; /* 像素字体无粗体，合成加粗会糊 */
   letter-spacing: 5px;
   color: var(--muted);
 }
@@ -1270,11 +1272,25 @@ header.topbar {
 }
 
 .chat-listen {
-  font-family: 'Silkscreen', monospace; /* 像素风 */
-  font-size: 14px;
-  letter-spacing: 1px;
+  font-family: 'Press Start 2P', monospace; /* 像素风 */
+  font-size: 11px;
+  letter-spacing: 0.5px;
   color: var(--accent);
+  position: relative;
+  top: 1px; /* 整行文字下移 1px */
   animation: fade-in 0.3s ease;
+}
+
+/* 页脚版本号：极小极淡，确认更新到位用 */
+.version-tag {
+  text-align: center;
+  font-size: 10px;
+  color: var(--faint);
+  opacity: 0.65;
+  margin: 20px 0 2px;
+  font-variant-numeric: tabular-nums;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* 未激活：普通玻璃样式；聚焦后变粉色框 */
