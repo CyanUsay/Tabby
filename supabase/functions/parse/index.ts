@@ -60,7 +60,8 @@ ${(ctx.cycleEvents ?? []).map((e) => `${e.date} ${e.event}`).join('、') || '（
   · 删过去某天/某段的周期记录（"把9号的出血删掉/删除从前天开始的月经/整个经期记录删掉"）
     → {"what":"cycle_events","items":[{"event":"...","date":"YYYY-MM-DD"},...]}
       items 必须从上面"数据库里最近的周期记录"中挑选真实存在的条目逐条列出
-      （如"整个经期"= 该段所有 period_start/bleed_heavy/bleed_light/period_end 条目）；
+      （"整个经期"= 该段的 period_start/bleed_heavy/bleed_light/period_end 条目；
+      jelly、pms_start、not_period 不属于经期记录，用户点名才删）；
       对不上号才用 clarify 问，能对上就直接给 items 不要反问
 - 补记多天：用户可能一次报多天，cycle 用数组逐天生成：
   · "9号和10号都有少量出血" → 两条 bleed_light（date 取今天所在月份的 9 日与 10 日；若该日期晚于今天则取上个月）
