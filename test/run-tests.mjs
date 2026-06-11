@@ -5,7 +5,12 @@ import assert from 'node:assert/strict';
 import { appToday, addDays, diffDays, weekOf } from '../js/dates.js';
 import { getChecklist, SLOTS } from '../js/protocol.js';
 import { deriveState, backfillStart } from '../js/cycle.js';
-import { filterIntakeToChecklist, sanitizeRemove, dropContradictoryCycles } from '../js/ai.js';
+import {
+  filterIntakeToChecklist,
+  sanitizeRemove,
+  removeRequiresIntent,
+  dropContradictoryCycles,
+} from '../js/ai.js';
 
 let passed = 0;
 function test(name, fn) {
@@ -380,6 +385,14 @@ test('又删又记的矛盾条目：删除优先，剔除重复新增', () => {
   ];
   assert.deepEqual(dropContradictoryCycles(cycles, remove), [{ event: 'jelly', date: '2026-06-09' }]);
   assert.deepEqual(dropContradictoryCycles(cycles, { what: 'cycle_today' }), cycles); // 其他删除形态不动
+});
+test('删除意图防火墙：话里没有删除字眼时丢弃 remove', () => {
+  const rm = { what: 'cycle_events', items: [{ event: 'bleed_light', date: '2026-06-09' }] };
+  assert.equal(removeRequiresIntent(rm, '前天开始流血'), null); // 纯记录话术 → 丢弃
+  assert.deepEqual(removeRequiresIntent(rm, '把9号的出血删掉'), rm);
+  assert.deepEqual(removeRequiresIntent(rm, '搞错了，今天不是经期'), rm);
+  assert.deepEqual(removeRequiresIntent(rm, '撤销刚才那条'), rm);
+  assert.equal(removeRequiresIntent(null, '随便说点什么'), null);
 });
 
 console.log(`\n合计 ${passed} tests passed`);
