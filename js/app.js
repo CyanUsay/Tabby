@@ -671,6 +671,10 @@ async function executeRemove(remove) {
     await db.deleteCycleEventsByDate(state.today);
     return '今天的周期记录删掉了喵，状态重新算过了 ฅ(•ㅅ•)ฅ';
   }
+  if (remove.what === 'cycle_events') {
+    for (const it of remove.items) await db.deleteCycleEvent(it);
+    return `删掉了 ${remove.items.length} 条周期记录喵，状态重新算过了 ฅ(•ㅅ•)ฅ`;
+  }
   // what === 'last'：撤销最近一次聊天确认
   const last = state.lastCommit;
   if (!last) return '咦…Tabby 不记得刚才记过什么了喵，要不直接说删哪条？(=･ｪ･=?';
@@ -796,6 +800,8 @@ async function boot() {
       mode: state.modeInfo.mode,
       checklist: state.checklist,
       fixedSymptoms: state.fixedSymptoms,
+      // 最近的周期记录（倒序）：让 AI 能精确定位"删掉X号那条/整个经期"
+      cycleEvents: state.cycleEvents.slice(0, 20).map(({ event, date }) => ({ event, date })),
     }),
     parse,
     onCommit: commitDraft,

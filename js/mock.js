@@ -70,10 +70,16 @@ export function mockParse(text, context) {
       const result = { intake: [], symptoms: [], cycle: null, remove: null, clarify: null };
 
       // 撤销/删除
-      if (text.includes('删掉') || text.includes('撤销')) {
+      if (text.includes('删掉') || text.includes('删除') || text.includes('撤销')) {
         if (text.includes('症状')) result.remove = { what: 'symptoms_today' };
-        else if (text.includes('周期') || text.includes('经期')) result.remove = { what: 'cycle_today' };
-        else result.remove = { what: 'last' };
+        else if (text.includes('整个') && (text.includes('经期') || text.includes('月经'))) {
+          // 模拟真 prompt：从 context.cycleEvents 里挑出经期相关条目逐条删
+          const items = (context.cycleEvents ?? []).filter((e) =>
+            ['period_start', 'bleed_heavy', 'bleed_light', 'period_end'].includes(e.event));
+          result.remove = { what: 'cycle_events', items };
+        } else if (text.includes('周期') || text.includes('经期')) {
+          result.remove = { what: 'cycle_today' };
+        } else result.remove = { what: 'last' };
         return resolve(result);
       }
       if (text.includes('不是经期')) {

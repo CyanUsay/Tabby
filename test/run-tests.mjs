@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { appToday, addDays, diffDays, weekOf } from '../js/dates.js';
 import { getChecklist, SLOTS } from '../js/protocol.js';
 import { deriveState, backfillStart } from '../js/cycle.js';
-import { filterIntakeToChecklist } from '../js/ai.js';
+import { filterIntakeToChecklist, sanitizeRemove } from '../js/ai.js';
 
 let passed = 0;
 function test(name, fn) {
@@ -357,6 +357,20 @@ test('不在应服清单内的 intake 项被丢弃', () => {
   assert.equal(filtered.length, 1);
   assert.equal(filtered[0].supplement, 'VC');
   assert.equal(filtered[0].dose, '500 mg'); // 剂量快照来自清单，不信 AI
+});
+test('sanitizeRemove：cycle_events 过滤编造项、去重、空则整体置 null', () => {
+  const r = sanitizeRemove({
+    what: 'cycle_events',
+    items: [
+      { event: 'period_start', date: '2026-06-09' },
+      { event: 'period_start', date: '2026-06-09' }, // 重复
+      { event: '人参', date: '2026-06-09' }, // 编造事件
+      { event: 'bleed_heavy', date: '06-09' }, // 非法日期
+    ],
+  });
+  assert.deepEqual(r, { what: 'cycle_events', items: [{ event: 'period_start', date: '2026-06-09' }] });
+  assert.equal(sanitizeRemove({ what: 'cycle_events', items: [{ event: 'x', date: 'y' }] }), null);
+  assert.deepEqual(sanitizeRemove({ what: 'last' }), { what: 'last' });
 });
 
 console.log(`\n合计 ${passed} tests passed`);

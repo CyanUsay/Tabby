@@ -69,7 +69,9 @@
   待定（ovulationPending），消退后重算自动落定。
 - RLS：intake_log 无 delete（取消打卡=taken false）；cycle_event/symptom_log
   有 delete（0003 起，支持聊天撤销指令）；symptom"清除"= 真删除行。
-- 聊天解析带最近 6 条对话上下文（修复"都有"被误判的 bug），cycle 可为数组（多天补记）。
+- 聊天解析带最近 6 条对话上下文（修复"都有"被误判的 bug）+ 最近 20 条周期记录
+  （让"删掉X号那条/整个经期"能精确定位）；cycle 可为数组（多天补记）；
+  remove 支持 cycle_events 按"事件+日期"删任意过去记录（修复只能删今天的 bug）。
 
 ## 用户身体相关的已定参数（别擅自改）
 

@@ -16,6 +16,15 @@ const REMOVE_LABELS = {
   cycle_today: '删掉今天的周期记录',
   symptoms_today: '删掉今天记的全部症状',
 };
+const EVENT_LABELS = {
+  period_start: '经期开始',
+  period_end: '经期结束',
+  pms_start: '进入 PMS',
+  jelly: '果冻状分泌物',
+  bleed_light: '少量出血',
+  bleed_heavy: '经期血量出血',
+  not_period: '确认不是月经',
+};
 
 // opts: { logEl, input, sendBtn, getContext, parse, onCommit, onWake }
 //  getContext() → { date, mode, checklist, fixedSymptoms }
@@ -108,11 +117,29 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, o
 
       if (draft.remove) {
         card.appendChild(sectionTitle('删除'));
-        const row = document.createElement('div');
-        row.className = 'preview-row';
-        row.innerHTML = `<span class="mark off-mark">✕</span><span class="pname"></span>`;
-        row.querySelector('.pname').textContent = REMOVE_LABELS[draft.remove.what];
-        card.appendChild(row);
+        if (draft.remove.what === 'cycle_events') {
+          // 按条删过去的周期记录：每行可单独点 ✕ 从删除列表里剔除
+          draft.remove.items.forEach((it, idx) => {
+            const row = document.createElement('button');
+            row.className = 'preview-row';
+            row.innerHTML = `<span class="mark off-mark">✕</span><span class="pname"></span><span class="remove">✕</span>`;
+            row.querySelector('.pname').textContent = `删掉 ${EVENT_LABELS[it.event]} · ${it.date}`;
+            row.addEventListener('click', (e) => {
+              if (e.target.classList.contains('remove')) {
+                draft.remove.items.splice(idx, 1);
+                if (!draft.remove.items.length) draft.remove = null;
+                rebuild();
+              }
+            });
+            card.appendChild(row);
+          });
+        } else {
+          const row = document.createElement('div');
+          row.className = 'preview-row';
+          row.innerHTML = `<span class="mark off-mark">✕</span><span class="pname"></span>`;
+          row.querySelector('.pname').textContent = REMOVE_LABELS[draft.remove.what];
+          card.appendChild(row);
+        }
       }
 
       if (isFullDefault()) {
@@ -171,15 +198,6 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, o
 
       if (draft.cycles.length) {
         card.appendChild(sectionTitle('周期'));
-        const EVENT_LABELS = {
-          period_start: '经期开始',
-          period_end: '经期结束',
-          pms_start: '进入 PMS',
-          jelly: '果冻状分泌物',
-          bleed_light: '少量出血',
-          bleed_heavy: '经期血量出血',
-          not_period: '确认不是月经',
-        };
         draft.cycles.forEach((c, idx) => {
           const row = document.createElement('button');
           row.className = 'preview-row';

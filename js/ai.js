@@ -86,11 +86,26 @@ export function sanitizeCycles(cycle) {
   return out;
 }
 
-// 规整 remove（撤销/删除指令）：只接受白名单动作
+// 规整 remove（撤销/删除指令）：只接受白名单动作。
+// cycle_events = 按"事件+日期"逐条精确删（可删任意过去日期的记录）
 export function sanitizeRemove(remove) {
   if (!remove || typeof remove !== 'object') return null;
   if (['last', 'cycle_today', 'symptoms_today'].includes(remove.what)) {
     return { what: remove.what };
+  }
+  if (remove.what === 'cycle_events' && Array.isArray(remove.items)) {
+    const seen = new Set();
+    const items = [];
+    for (const it of remove.items) {
+      if (!it || !CYCLE_EVENTS.includes(it.event)) continue;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(it.date || '')) continue;
+      const key = `${it.event}|${it.date}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      items.push({ event: it.event, date: it.date });
+      if (items.length >= 14) break;
+    }
+    if (items.length) return { what: 'cycle_events', items };
   }
   return null;
 }

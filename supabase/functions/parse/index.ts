@@ -16,6 +16,7 @@ interface Context {
   mode: 'daily' | 'pms' | 'period';
   checklist: Array<{ supplement: string; slot: string; dose: string }>;
   fixedSymptoms: string[];
+  cycleEvents?: Array<{ event: string; date: string }>; // 最近的周期记录（删除指令定位用）
 }
 
 // 注意：DeepSeek 的 json_object 模式硬性要求 prompt 中包含 "json" 字样，
@@ -26,6 +27,9 @@ function buildSystemPrompt(ctx: Context): string {
 ${JSON.stringify(ctx.checklist, null, 0)}
 
 已知固定症状标签：${ctx.fixedSymptoms.join('、')}
+
+数据库里最近的周期记录（日期 事件）：
+${(ctx.cycleEvents ?? []).map((e) => `${e.date} ${e.event}`).join('、') || '（暂无记录）'}
 
 用户会用自然语言描述服用情况和身体状况。请解析为 JSON，严格只输出一个 JSON 对象，
 不要 markdown，不要解释。结构：
@@ -53,6 +57,11 @@ ${JSON.stringify(ctx.checklist, null, 0)}
   · "刚刚那条删掉/撤销/记错了删掉" → {"what":"last"}
   · "搞错了，今天不是经期/把今天的周期记录删了" → {"what":"cycle_today"}
   · "把今天记的症状都删了" → {"what":"symptoms_today"}
+  · 删过去某天/某段的周期记录（"把9号的出血删掉/删除从前天开始的月经/整个经期记录删掉"）
+    → {"what":"cycle_events","items":[{"event":"...","date":"YYYY-MM-DD"},...]}
+      items 必须从上面"数据库里最近的周期记录"中挑选真实存在的条目逐条列出
+      （如"整个经期"= 该段所有 period_start/bleed_heavy/bleed_light/period_end 条目）；
+      对不上号才用 clarify 问，能对上就直接给 items 不要反问
 - 补记多天：用户可能一次报多天，cycle 用数组逐天生成：
   · "9号和10号都有少量出血" → 两条 bleed_light（date 取今天所在月份的 9 日与 10 日；若该日期晚于今天则取上个月）
   · "昨天" = ${ctx.date} 减 1 天；"前天" = 减 2 天；"这两天有果冻" = 昨天和今天各一条 jelly
