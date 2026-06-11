@@ -55,14 +55,16 @@ ${(ctx.cycleEvents ?? []).map((e) => `${e.date} ${e.event}`).join('、') || '（
 - severity 取值 1-3（"有点"→1，默认→2，"很/特别严重"→3）；无法判断填 2
 - 撤销/删除表达填 remove，否则 null：
   · "刚刚那条删掉/撤销/记错了删掉" → {"what":"last"}
-  · "搞错了，今天不是经期/把今天的周期记录删了" → {"what":"cycle_today"}
-  · "把今天记的症状都删了" → {"what":"symptoms_today"}
-  · 删过去某天/某段的周期记录（"把9号的出血删掉/删除从前天开始的月经/整个经期记录删掉"）
+  · 删周期记录的【默认形态】（"删除pms/把9号的出血删掉/删除从前天开始的月经/整个经期删掉"）
     → {"what":"cycle_events","items":[{"event":"...","date":"YYYY-MM-DD"},...]}
-      items 必须从上面"数据库里最近的周期记录"中挑选真实存在的条目逐条列出
-      （"整个经期"= 该段的 period_start/bleed_heavy/bleed_light/period_end 条目；
-      jelly、pms_start、not_period 不属于经期记录，用户点名才删）；
+      items 必须从上面"数据库里最近的周期记录"中挑选真实存在的条目逐条列出，
+      日期以记录里的为准（"删除pms"= 找到 pms_start 那条，哪怕它是几天前记的）；
+      "整个经期"= 该段的 period_start/bleed_heavy/bleed_light/period_end 条目，
+      jelly、pms_start、not_period 不属于经期记录，用户点名才删；
       对不上号才用 clarify 问，能对上就直接给 items 不要反问
+  · 仅当用户明确点名"今天"（"把今天的周期记录删了/搞错了，今天不是经期"）
+    → {"what":"cycle_today"}
+  · "把今天记的症状都删了" → {"what":"symptoms_today"}
   · 纯删除指令时 cycle 必须为 null——绝不要把要删的条目再写进 cycle（又删又记等于没删）
 - 补记多天：用户可能一次报多天，cycle 用数组逐天生成：
   · "9号和10号都有少量出血" → 两条 bleed_light（date 取今天所在月份的 9 日与 10 日；若该日期晚于今天则取上个月）
