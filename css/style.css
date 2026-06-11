@@ -21,6 +21,7 @@
   --accent: #d6809a;
   --accent-deep: #c46d88;
   --blue: #7c9cc4;
+  --divider: color-mix(in srgb, #33405a 22%, transparent);
   --shadow: 0 8px 28px rgba(80, 100, 140, 0.14);
   --shadow-soft: 0 2px 12px rgba(80, 100, 140, 0.1);
   --radius: 22px;
@@ -43,6 +44,7 @@
   --accent: #e89cb0;
   --accent-deep: #dd86a0;
   --blue: #8aa3c8;
+  --divider: color-mix(in srgb, #efecf0 22%, transparent);
   --shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
   --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.35);
 }
@@ -377,9 +379,9 @@ header.topbar {
   stroke: #e88aa0; /* 完成态圆环 = 睡醒时段的粉 */
 }
 
-/* 完成态：圆环外圈发光，和睡醒时段勾选圆同款 */
-.done-btn.done {
-  box-shadow: var(--shadow), 0 0 22px color-mix(in srgb, #e88aa0 60%, transparent);
+/* 完成态：光从粉色圆环本体向外辐射 */
+.done-btn.done .done-ring {
+  filter: drop-shadow(0 0 6px #e88aa0) drop-shadow(0 0 14px rgba(232, 138, 160, 0.6));
 }
 
 .done-label {
@@ -924,11 +926,10 @@ header.topbar {
 }
 
 .bubble.user {
-  background: var(--text);
-  color: var(--bg-base);
+  background: var(--divider); /* 与分割线/未激活小猫同色 */
+  color: var(--text);
   margin-left: auto;
   border-bottom-right-radius: 6px;
-  box-shadow: var(--shadow-soft);
 }
 
 .bubble.tabby {
@@ -1156,12 +1157,12 @@ header.topbar {
   gap: 10px;
 }
 
-/* 分割线：以下是聊天记录；小猫坐在线的右上角，激活才变粉 */
+/* 分割线：以下是聊天记录；小猫坐在线的左上角，激活才变粉 */
 .chat-divider {
   position: relative;
   height: 2.5px;
   border-radius: 3px;
-  background: color-mix(in srgb, var(--text) 22%, transparent);
+  background: var(--divider);
   margin: 34px 2px 14px;
   transition: background 0.25s;
 }
@@ -1171,13 +1172,19 @@ header.topbar {
   background: var(--accent); /* 与输入框聚焦粉一致 */
 }
 
-.chat-cat {
+.cat-wrap {
   position: absolute;
   left: 6px;
   bottom: 1px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.chat-cat {
   font-size: 18px;
   font-weight: 700;
-  color: var(--muted);
+  color: var(--divider); /* 未激活与分割线同色 */
   -webkit-user-select: none;
   user-select: none;
   transition: color 0.25s;
@@ -1185,6 +1192,14 @@ header.topbar {
 
 .chat-cat.awake {
   color: var(--accent); /* 与输入框聚焦粉一致 */
+}
+
+.chat-listen {
+  font-size: 12px;
+  font-style: italic;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  animation: fade-in 0.3s ease;
 }
 
 /* 未激活：普通玻璃样式；聚焦后变粉色框 */
