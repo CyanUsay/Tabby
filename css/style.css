@@ -102,6 +102,12 @@ body.no-scroll {
   overflow: hidden;
 }
 
+/* 滑卡打开期间藏掉底栏：iOS 的 backdrop-filter 合成层会无视 z-index
+   把底栏顶到滑卡之上（全屏页底部那条"漏边"就是它）；反正盖住也点不到 */
+body.no-scroll .tabbar {
+  display: none;
+}
+
 button {
   font-family: inherit;
 }
