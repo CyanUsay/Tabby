@@ -48,6 +48,7 @@ export function initRecords({ db, cfg, getEvents, today }) {
   let sheetState = 'closed'; // 'closed' | 'half'
   let loadSeq = 0; // 异步加载竞态令牌
   let savedScroll = 0; // 进当日页前的月历滚动位置
+  let entering = false; // 进当日页的过渡动画进行中
 
   // ---- 月历渲染 ----
   function monthList() {
@@ -223,6 +224,7 @@ export function initRecords({ db, cfg, getEvents, today }) {
   }
 
   function closeSheet() {
+    if (entering) return; // 交接动画中不许打断
     sheetState = 'closed';
     sheet.classList.remove('half', 'dragging');
     sheet.style.transform = '';
@@ -235,14 +237,37 @@ export function initRecords({ db, cfg, getEvents, today }) {
   backdrop.addEventListener('click', closeSheet);
 
   // ---- 当日独立页面（普通文档流，不用 fixed 浮层 → 不存在 iOS 合成漏边）----
+  // 丝滑交接三步：滑卡顺势滑满屏 → 盖住时底下静默换页 → 滑卡淡出露出页面
   function enterDayPage(d) {
-    closeSheet(); // 收滑卡、恢复 body 滚动
-    savedScroll = window.scrollY;
-    document.body.dataset.page = 'day';
-    pageRecords.hidden = true;
-    pageDay.hidden = false;
-    window.scrollTo(0, 0);
-    loadDay(d, dayTargets);
+    if (entering) return;
+    entering = true;
+    savedScroll = scrollLockY; // 月历位置（body 此刻还锁着）
+    sheetState = 'closed'; // 不再响应拖动
+    sheet.classList.remove('half');
+    sheet.style.transform = 'translateY(0)'; // 基础 transition 带动画滑满屏
+
+    setTimeout(() => {
+      // 滑卡已盖满屏：底下静默换页
+      document.body.classList.remove('no-scroll');
+      document.body.style.top = '';
+      document.body.dataset.page = 'day';
+      pageRecords.hidden = true;
+      pageDay.hidden = false;
+      window.scrollTo(0, 0);
+      loadDay(d, dayTargets);
+      // 淡出滑卡，交接给页面
+      sheet.classList.add('exiting');
+      backdrop.classList.add('exiting');
+      setTimeout(() => {
+        sheet.hidden = true; backdrop.hidden = true;
+        sheet.classList.remove('exiting');
+        backdrop.classList.remove('exiting');
+        sheet.style.transform = '';
+        monthsEl.querySelectorAll('.bw-day.sel').forEach((n) => n.classList.remove('sel'));
+        selected = null;
+        entering = false;
+      }, 280);
+    }, 320);
   }
 
   function exitDayPage() {
