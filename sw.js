@@ -1,6 +1,6 @@
 // Tabby service worker · app shell cache-first
 // ⚠️ 改了任何前端文件后必须 bump 这个版本号，否则旧缓存不会更新。
-const CACHE = 'tabby-shell-v30';
+const CACHE = 'tabby-shell-v31';
 
 const SHELL = [
   './',
@@ -23,6 +23,7 @@ const SHELL = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
+  './icons/stamp.png',
 ];
 
 self.addEventListener('install', (e) => {
