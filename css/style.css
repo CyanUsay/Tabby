@@ -84,11 +84,11 @@ main {
 
 /* 主页：聊天条 + Tab 栏的留白；记录/数据：只留 Tab 栏 */
 #page-home {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 130px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 122px);
 }
 #page-records,
 #page-data {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 80px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 72px);
 }
 .page[hidden] {
   display: none;
@@ -1239,7 +1239,7 @@ header.topbar {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(env(safe-area-inset-bottom) + 58px); /* 坐在 Tab 栏之上 */
+  bottom: calc(env(safe-area-inset-bottom) + 50px); /* 坐在 Tab 栏之上 */
   padding: 12px 20px;
   z-index: 40;
 }
@@ -1257,7 +1257,7 @@ body:not([data-page='home']) .chat-bar {
   bottom: 0;
   z-index: 50;
   display: flex;
-  height: calc(env(safe-area-inset-bottom) + 58px);
+  height: calc(env(safe-area-inset-bottom) + 50px); /* 整体比初版下移 8px */
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--glass-strong);
   backdrop-filter: var(--blur);
@@ -1295,18 +1295,15 @@ body:not([data-page='home']) .chat-bar {
 }
 
 /* ---------- 记录页：连续月历 ---------- */
-.rec-heading {
-  margin: 8px 2px 14px;
-}
-
 .months {
   display: flex;
   flex-direction: column;
   gap: 26px;
+  padding-top: 6px;
 }
 
 .month-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--muted);
   margin: 0 2px 8px;
@@ -1315,6 +1312,19 @@ body:not([data-page='home']) .chat-bar {
 .bw-day.rec {
   cursor: pointer;
   padding: 4px 0 6px;
+}
+
+/* 记录页月历比主页两周历放大一个字号（数字 12.5→13.5，星期 10→11） */
+.months .bw-day .num {
+  width: 27px;
+  height: 27px;
+  font-size: 13.5px;
+}
+.months .bw-dow {
+  font-size: 11px;
+}
+.months .bw-day .hl {
+  height: 24px;
 }
 
 .bw-day.empty {
@@ -1353,7 +1363,8 @@ body:not([data-page='home']) .chat-bar {
   z-index: 61;
   max-width: 480px;
   margin: 0 auto;
-  height: 92vh;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--glass-strong);
@@ -1362,14 +1373,16 @@ body:not([data-page='home']) .chat-bar {
   border-top: 1px solid var(--glass-border);
   border-radius: 24px 24px 0 0;
   box-shadow: 0 -10px 36px rgba(0, 0, 0, 0.22);
-  transform: translateY(55%); /* 默认半屏 */
+  transform: translateY(58%); /* 默认半屏 */
   transition: transform 0.34s cubic-bezier(0.32, 1.3, 0.5, 1);
 }
+.day-sheet.half {
+  transform: translateY(58%);
+}
+/* 全屏单页：占满整屏、去圆角，只能左上角 ← 退回 */
 .day-sheet.full {
   transform: translateY(0);
-}
-.day-sheet.half {
-  transform: translateY(55%);
+  border-radius: 0;
 }
 .day-sheet.dragging {
   transition: none;
@@ -1396,44 +1409,69 @@ body:not([data-page='home']) .chat-bar {
   border-radius: 3px;
   background: var(--divider);
 }
+.day-sheet.full .sheet-handle {
+  display: none; /* 全屏成单页，不再可拖 */
+}
+
+.sheet-top {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 16px 8px;
+}
+.day-sheet.full .sheet-top {
+  padding-top: calc(env(safe-area-inset-top) + 12px);
+}
+
+.sheet-back {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1;
+  padding: 6px 10px 6px 0;
+  cursor: pointer;
+}
+.day-sheet.full .sheet-back {
+  display: block; /* ← 只在全屏出现 */
+}
+
+.sheet-title {
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
 
 .sheet-body {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 22px calc(env(safe-area-inset-bottom) + 90px);
+  padding: 4px 18px calc(env(safe-area-inset-bottom) + 90px);
   -webkit-overflow-scrolling: touch;
 }
 
-.day-head {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-.day-date {
-  font-size: 26px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-.day-dow {
-  font-size: 14px;
-  color: var(--muted);
+/* 当日内容：玻璃分块卡（参考主页卡片） */
+.day-card {
+  padding: 16px;
+  margin-bottom: 12px;
 }
 
-.day-section {
-  margin-top: 18px;
-}
 .day-section-title {
   font-size: 13px;
   font-weight: 700;
   color: var(--muted);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .day-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  margin-top: 10px;
+}
+.day-chips:first-of-type {
+  margin-top: 0;
 }
 .day-chip {
   background: var(--glass);
@@ -1443,16 +1481,38 @@ body:not([data-page='home']) .chat-bar {
   font-size: 13px;
   font-weight: 600;
 }
-
-.day-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.day-chip.big {
+  font-size: 15px;
+  font-weight: 700;
+  padding: 8px 16px;
 }
-.day-list-row {
-  font-size: 14px;
+
+/* 症状 chip：紫色程度色阶（与症状卡一致） */
+.day-chip.day-sym.sev-1 { background: #ddd6f5; color: #6555a8; border-color: transparent; }
+.day-chip.day-sym.sev-2 { background: #9d8fe0; color: #fff; border-color: transparent; }
+.day-chip.day-sym.sev-3 { background: #7a68c8; color: #fff; border-color: transparent; }
+
+/* 补剂时段行：图标 + 时段名（带色点）+ 内容 */
+.day-slot {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 0;
+}
+.day-slot-icon {
+  font-size: 15px;
+}
+.day-slot-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--slot-color);
+  white-space: nowrap;
+}
+.day-slot-items {
+  font-size: 13.5px;
   color: var(--text);
 }
+
 .day-hint {
   font-size: 13px;
   color: var(--faint);
@@ -1473,6 +1533,18 @@ body:not([data-page='home']) .chat-bar {
 .day-note:focus {
   outline: none;
   border-color: var(--accent);
+}
+
+.note-view {
+  font-size: 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.note-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
 }
 
 .chat-bar .inner {
