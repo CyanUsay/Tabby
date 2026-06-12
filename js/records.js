@@ -163,8 +163,18 @@ export function initRecords({ db, cfg, getEvents, today }) {
 
     monthsEl.innerHTML = '';
     for (const first of list) monthsEl.appendChild(buildMonth(first, events, stOf));
-    // 滚到当月
-    monthsEl.children[MONTHS_BACK]?.scrollIntoView({ block: 'start' });
+    scrollToCurrentMonthEnd();
+  }
+
+  // 打开记录页：自动滚到"刚好显示完当月"的位置（当月末尾贴着 Tab 栏上沿）
+  function scrollToCurrentMonthEnd() {
+    requestAnimationFrame(() => {
+      const cur = monthsEl.children[MONTHS_BACK];
+      if (!cur) return;
+      const bottomGap = 70; // Tab 栏视觉高度 + 余量
+      const y = cur.getBoundingClientRect().bottom + window.scrollY - window.innerHeight + bottomGap;
+      window.scrollTo(0, Math.max(0, y));
+    });
   }
 
   // ---- 滑卡开合 ----

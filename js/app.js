@@ -831,11 +831,11 @@ function showPage(name) {
     t.classList.toggle('active', t.dataset.page === name);
   });
   if (name === 'records') {
-    records.render(); // 每次进入重渲染（数据可能已变）
+    records.render(); // 每次进入重渲染（数据可能已变），自动滚到当月末尾
   } else {
     records?.closeSheet();
+    window.scrollTo(0, 0);
   }
-  window.scrollTo(0, 0);
 }
 
 /* ---------- 启动 ---------- */

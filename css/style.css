@@ -1265,8 +1265,9 @@ body:not([data-page='home']) .chat-bar {
   bottom: 0;
   z-index: 50;
   display: flex;
-  height: calc(env(safe-area-inset-bottom) + 50px); /* 整体比初版下移 8px */
-  padding-bottom: env(safe-area-inset-bottom);
+  height: calc(env(safe-area-inset-bottom) + 50px);
+  /* 吃掉 16px 安全区留白 → 居中的图标整体下移 8px（贴近底部）；留 ≥10px 不压到 home 指示条 */
+  padding-bottom: max(10px, calc(env(safe-area-inset-bottom) - 16px));
   background: var(--glass-strong);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
@@ -1286,8 +1287,6 @@ body:not([data-page='home']) .chat-bar {
   font-size: 11px;
   cursor: pointer;
   transition: color 0.18s;
-  /* 栏变矮后图标居中只下移了一半，再补 4px 凑足整体 8px 下移 */
-  transform: translateY(4px);
 }
 
 .tab svg {
@@ -1389,8 +1388,11 @@ body:not([data-page='home']) .chat-bar {
 .day-sheet.half {
   transform: translateY(58%);
 }
-/* 全屏单页：占满整屏、去圆角，只能左上角 ← 退回 */
+/* 全屏单页：上下钉死铺满整屏、去圆角，只能左上角 ← 退回
+   （top:0 + bottom:0 撑满，避免 100dvh 在 iOS 上算不准、底部留黑块） */
 .day-sheet.full {
+  top: 0;
+  height: auto;
   transform: translateY(0);
   border-radius: 0;
 }
