@@ -84,11 +84,11 @@ main {
 
 /* 主页：聊天条 + Tab 栏的留白；记录/数据：只留 Tab 栏 */
 #page-home {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 112px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 102px);
 }
 #page-records,
 #page-data {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 62px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 52px);
 }
 .page[hidden] {
   display: none;
@@ -1247,7 +1247,7 @@ header.topbar {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(env(safe-area-inset-bottom) + 40px); /* 坐在 Tab 栏之上 */
+  bottom: calc(env(safe-area-inset-bottom) + 30px); /* 坐在 Tab 栏之上 */
   padding: 12px 20px;
   z-index: 40;
 }
@@ -1265,9 +1265,10 @@ body:not([data-page='home']) .chat-bar {
   bottom: 0;
   z-index: 50;
   display: flex;
-  /* 面板更薄：内容区 40px（v39 是 50px）→ 顶边再往下 10px */
-  height: calc(env(safe-area-inset-bottom) + 40px);
-  padding-bottom: env(safe-area-inset-bottom);
+  /* 顶边再降 10px（v40 内容区 40 → 顶边距屏底由 safe+40 降到 safe+30）；
+     图标恢复原尺寸，往安全区方向压一点、给顶部留间距，不贴顶边 */
+  height: calc(env(safe-area-inset-bottom) + 30px);
+  padding-bottom: max(8px, calc(env(safe-area-inset-bottom) - 22px));
   background: var(--glass-strong);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
@@ -1280,18 +1281,18 @@ body:not([data-page='home']) .chat-bar {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   background: none;
   border: none;
   color: var(--faint);
-  font-size: 10px;
+  font-size: 11px;
   cursor: pointer;
   transition: color 0.18s;
 }
 
 .tab svg {
-  width: 21px;
-  height: 21px;
+  width: 24px;
+  height: 24px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
@@ -1362,6 +1363,13 @@ body:not([data-page='home']) .chat-bar {
   background: rgba(0, 0, 0, 0.35);
   z-index: 60;
   animation: fade-in 0.25s ease;
+}
+/* 全屏态：遮罩铺满全屏并用卡片同色 → 即使滑卡边缘有缝也不会露出 body 背景 */
+.sheet-backdrop.full {
+  background: rgba(250, 246, 249, 1);
+}
+[data-theme='dark'] .sheet-backdrop.full {
+  background: rgba(26, 25, 32, 1);
 }
 
 .day-sheet {
