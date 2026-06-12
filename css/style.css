@@ -1401,6 +1401,17 @@ body:not([data-page='home']) .chat-bar {
 .day-sheet.dragging {
   transition: none;
 }
+/* 滑卡 → 当日页的交接淡出 */
+.day-sheet.exiting {
+  transition: opacity 0.28s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+.sheet-backdrop.exiting {
+  transition: opacity 0.28s ease;
+  opacity: 0;
+  pointer-events: none;
+}
 .day-sheet[hidden],
 .sheet-backdrop[hidden] {
   display: none;
