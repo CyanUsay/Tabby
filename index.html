@@ -132,6 +132,15 @@
     <div class="data-placeholder">数据页敬请期待喵 ฅ^•ﻌ•^ฅ</div>
   </main>
 
+  <!-- 当日记录页：半屏滑卡上滑进入的独立页面，← 返回月历 -->
+  <main id="page-day" class="page" hidden>
+    <div class="day-top">
+      <button id="day-back" class="day-back" aria-label="返回">←</button>
+      <span id="day-title" class="sheet-title"></span>
+    </div>
+    <div id="day-body"></div>
+  </main>
+
   <div class="chat-bar">
     <div class="inner">
       <input id="chat-input" type="text" placeholder="跟 Tabby 说点什么喵…" enterkeyhint="send" />
@@ -139,12 +148,11 @@
     </div>
   </div>
 
-  <!-- 当日记录滑卡：点日期半屏弹出，上滑进全屏单页（左上角 ← 返回），下滑/再点关闭 -->
+  <!-- 当日记录滑卡：点日期半屏弹出；上滑切到独立的当日页面；下滑/再点关闭 -->
   <div id="sheet-backdrop" class="sheet-backdrop" hidden></div>
   <section id="day-sheet" class="day-sheet" hidden>
     <button class="sheet-handle" id="sheet-handle" aria-label="拖动"><span></span></button>
     <div class="sheet-top">
-      <button id="sheet-back" class="sheet-back" aria-label="返回">←</button>
       <span id="sheet-title" class="sheet-title"></span>
     </div>
     <div id="day-sheet-body" class="sheet-body"></div>

@@ -1362,19 +1362,13 @@ body:not([data-page='home']) .chat-bar {
   font-size: 14px;
 }
 
-/* ---------- 当日记录滑卡 ---------- */
+/* ---------- 当日记录滑卡（仅半屏；上滑切换到独立的当日页面） ---------- */
 .sheet-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.35);
   z-index: 60;
   animation: fade-in 0.25s ease;
-}
-/* 全屏态：遮罩也铺主页同款渐变 → 即使有缝，露出的也是同一张渐变，边界隐形 */
-.sheet-backdrop.full {
-  background-color: var(--bg-base);
-  background-image: var(--bg-image);
-  background-size: cover;
 }
 
 .day-sheet {
@@ -1389,14 +1383,13 @@ body:not([data-page='home']) .chat-bar {
   height: 100dvh;
   display: flex;
   flex-direction: column;
-  /* 近实色统一底：避免半透明透出底层不均渐变（底部发黑） */
   background: rgba(250, 246, 249, 0.97);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
   border-top: 1px solid var(--glass-border);
   border-radius: 24px 24px 0 0;
   box-shadow: 0 -10px 36px rgba(0, 0, 0, 0.22);
-  transform: translateY(58%); /* 默认半屏 */
+  transform: translateY(58%); /* 半屏 */
   transition: transform 0.34s cubic-bezier(0.32, 1.3, 0.5, 1);
 }
 [data-theme='dark'] .day-sheet {
@@ -1404,21 +1397,6 @@ body:not([data-page='home']) .chat-bar {
 }
 .day-sheet.half {
   transform: translateY(58%);
-}
-/* 全屏单页：上下钉死铺满整屏、去圆角，只能左上角 ← 退回。
-   背景 = 主页同款弥散渐变（与 body 几何对齐，任何缝隙都露不出异色边） */
-.day-sheet.full {
-  top: 0;
-  height: auto;
-  transform: translateY(0);
-  border-radius: 0;
-  background-color: var(--bg-base);
-  background-image: var(--bg-image);
-  background-size: cover;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border-top: none;
-  box-shadow: none;
 }
 .day-sheet.dragging {
   transition: none;
@@ -1445,9 +1423,6 @@ body:not([data-page='home']) .chat-bar {
   border-radius: 3px;
   background: var(--divider);
 }
-.day-sheet.full .sheet-handle {
-  display: none; /* 全屏成单页，不再可拖 */
-}
 
 .sheet-top {
   flex: none;
@@ -1456,12 +1431,31 @@ body:not([data-page='home']) .chat-bar {
   gap: 6px;
   padding: 2px 16px 8px;
 }
-.day-sheet.full .sheet-top {
-  padding-top: calc(env(safe-area-inset-top) + 12px);
+
+.sheet-title {
+  font-size: 21px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
-.sheet-back {
-  display: none;
+/* ---------- 当日记录页（普通文档流页面，背景即 body 渐变） ---------- */
+#page-day {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 52px);
+}
+
+body[data-page='day'] .tabbar,
+body[data-page='day'] .topbar {
+  display: none; /* 单独页面：只留 ← 返回，不显顶栏底栏 */
+}
+
+.day-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 12px;
+}
+
+.day-back {
   background: none;
   border: none;
   color: var(--text);
@@ -1469,15 +1463,6 @@ body:not([data-page='home']) .chat-bar {
   line-height: 1;
   padding: 6px 10px 6px 0;
   cursor: pointer;
-}
-.day-sheet.full .sheet-back {
-  display: block; /* ← 只在全屏出现 */
-}
-
-.sheet-title {
-  font-size: 21px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
 }
 
 .sheet-body {

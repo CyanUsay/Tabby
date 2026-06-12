@@ -30,14 +30,24 @@ export function initRecords({ db, cfg, getEvents, today }) {
   const monthsEl = document.getElementById('months');
   const sheet = document.getElementById('day-sheet');
   const backdrop = document.getElementById('sheet-backdrop');
-  const sheetBody = document.getElementById('day-sheet-body');
-  const sheetTitle = document.getElementById('sheet-title');
+  const sheetTargets = {
+    bodyEl: document.getElementById('day-sheet-body'),
+    titleEl: document.getElementById('sheet-title'),
+  };
+  const pageRecords = document.getElementById('page-records');
+  const pageDay = document.getElementById('page-day');
+  const dayTargets = {
+    bodyEl: document.getElementById('day-body'),
+    titleEl: document.getElementById('day-title'),
+  };
   const handle = document.getElementById('sheet-handle');
-  const backBtn = document.getElementById('sheet-back');
+  const dayBack = document.getElementById('day-back');
 
   let symMap = new Map(); // date -> [症状]（PMS 色带浓度用）
   let selected = null;
-  let sheetState = 'closed'; // 'closed' | 'half' | 'full'
+  let sheetState = 'closed'; // 'closed' | 'half'
+  let loadSeq = 0; // 异步加载竞态令牌
+  let savedScroll = 0; // 进当日页前的月历滚动位置
 
   // ---- 月历渲染 ----
   function monthList() {
@@ -185,8 +195,8 @@ export function initRecords({ db, cfg, getEvents, today }) {
     for (const cell of monthsEl.querySelectorAll('.bw-day.rec')) {
       if (cell.__date === d) cell.classList.add('sel');
     }
-    openSheet('half');
-    loadDay(d);
+    openSheet();
+    loadDay(d, sheetTargets);
   }
 
   // 滑卡打开时锁住底下页面滚动（iOS 经典 body-fixed 方案，防误触月历）
@@ -202,31 +212,49 @@ export function initRecords({ db, cfg, getEvents, today }) {
     window.scrollTo(0, scrollLockY);
   }
 
-  function setSheetState(s) {
-    sheetState = s;
-    sheet.classList.toggle('full', s === 'full');
-    sheet.classList.toggle('half', s === 'half');
-    backdrop.classList.toggle('full', s === 'full'); // 全屏时遮罩铺成卡片同色兜底
-    sheet.style.transform = '';
-    if (s === 'closed') {
-      sheet.hidden = true; backdrop.hidden = true;
-      unlockScroll();
-      selected = null;
-      monthsEl.querySelectorAll('.bw-day.sel').forEach((n) => n.classList.remove('sel'));
-    }
-  }
-
-  function openSheet(s) {
+  function openSheet() {
     if (sheet.hidden) lockScroll();
     sheet.hidden = false; backdrop.hidden = false;
-    requestAnimationFrame(() => setSheetState(s));
+    requestAnimationFrame(() => {
+      sheetState = 'half';
+      sheet.classList.add('half');
+      sheet.style.transform = '';
+    });
   }
-  function closeSheet() { setSheetState('closed'); }
+
+  function closeSheet() {
+    sheetState = 'closed';
+    sheet.classList.remove('half', 'dragging');
+    sheet.style.transform = '';
+    sheet.hidden = true; backdrop.hidden = true;
+    unlockScroll();
+    selected = null;
+    monthsEl.querySelectorAll('.bw-day.sel').forEach((n) => n.classList.remove('sel'));
+  }
 
   backdrop.addEventListener('click', closeSheet);
-  backBtn.addEventListener('click', closeSheet); // 全屏单页：← 退回月历
 
-  // 拖动把手（仅半屏可拖）：上滑进全屏单页 / 下滑关闭
+  // ---- 当日独立页面（普通文档流，不用 fixed 浮层 → 不存在 iOS 合成漏边）----
+  function enterDayPage(d) {
+    closeSheet(); // 收滑卡、恢复 body 滚动
+    savedScroll = window.scrollY;
+    document.body.dataset.page = 'day';
+    pageRecords.hidden = true;
+    pageDay.hidden = false;
+    window.scrollTo(0, 0);
+    loadDay(d, dayTargets);
+  }
+
+  function exitDayPage() {
+    pageDay.hidden = true;
+    pageRecords.hidden = false;
+    document.body.dataset.page = 'records';
+    window.scrollTo(0, savedScroll); // 回到离开时的月历位置
+  }
+
+  dayBack.addEventListener('click', exitDayPage);
+
+  // 拖动把手（半屏）：上滑进当日页面 / 下滑关闭
   (function dragHandle() {
     let startY = 0, dy = 0, dragging = false;
     handle.addEventListener('pointerdown', (e) => {
@@ -245,9 +273,10 @@ export function initRecords({ db, cfg, getEvents, today }) {
       if (!dragging) return;
       dragging = false;
       sheet.classList.remove('dragging');
-      if (dy < -60) setSheetState('full');
-      else if (dy > 90) setSheetState('closed');
-      else setSheetState('half');
+      const d = selected;
+      if (dy < -60 && d) enterDayPage(d);
+      else if (dy > 90) closeSheet();
+      else { sheet.style.transform = ''; sheet.classList.add('half'); }
     };
     handle.addEventListener('pointerup', onUp);
     handle.addEventListener('pointercancel', onUp);
@@ -263,11 +292,12 @@ export function initRecords({ db, cfg, getEvents, today }) {
     return { text: '正常', color: null };
   }
 
-  async function loadDay(d) {
+  async function loadDay(d, { bodyEl, titleEl }) {
+    const seq = ++loadSeq;
     const events = getEvents();
-    sheetTitle.textContent = `${md(d)} · 周${weekdayName(d)}`;
-    sheetBody.innerHTML = '';
-    sheetBody.scrollTop = 0;
+    titleEl.textContent = `${md(d)} · 周${weekdayName(d)}`;
+    bodyEl.innerHTML = '';
+    bodyEl.scrollTop = 0;
 
     // 周期状态 + 当日周期记录（合一张卡）
     const st = deriveState(events, d, cfg);
@@ -284,19 +314,19 @@ export function initRecords({ db, cfg, getEvents, today }) {
       }
       cycleCard.appendChild(row);
     }
-    sheetBody.appendChild(cycleCard);
+    bodyEl.appendChild(cycleCard);
 
     // 异步拉补剂 / 症状 / 备注
     const loading = card('');
     loading.appendChild(hint('读取中…'));
-    sheetBody.appendChild(loading);
+    bodyEl.appendChild(loading);
     let intake = [], symptoms = [], noteRows = [];
     try {
       [intake, symptoms, noteRows] = await Promise.all([
         db.fetchIntakeByDate(d), db.fetchSymptomsByDate(d), db.fetchNote(d),
       ]);
     } catch { /* 离线降级 */ }
-    if (selected !== d) return; // 期间又切了日期
+    if (seq !== loadSeq) return; // 期间又开了别的日期/页面
     loading.remove();
 
     // 补剂打卡：按时段分行，时段图标+色点（与今日安排一致）
@@ -315,7 +345,7 @@ export function initRecords({ db, cfg, getEvents, today }) {
       intakeCard.appendChild(row);
     }
     if (!any) intakeCard.appendChild(hint('这天没有打卡记录'));
-    sheetBody.appendChild(intakeCard);
+    bodyEl.appendChild(intakeCard);
 
     // 症状：紫色系 chip（程度色阶与症状卡一致）
     const logged = symptoms.filter((s) => s.severity > 0);
@@ -333,10 +363,10 @@ export function initRecords({ db, cfg, getEvents, today }) {
     } else {
       symCard.appendChild(hint('这天没有记录症状'));
     }
-    sheetBody.appendChild(symCard);
+    bodyEl.appendChild(symCard);
 
     // 备注：查看态（正文+编辑）⇄ 编辑态（输入框+确认）
-    sheetBody.appendChild(noteCard(d, noteRows[0]?.body ?? ''));
+    bodyEl.appendChild(noteCard(d, noteRows[0]?.body ?? ''));
   }
 
   function noteCard(d, initial) {
