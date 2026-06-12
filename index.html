@@ -124,7 +124,6 @@
 
   <!-- 记录页：连续月历（点日期 → 当日记录滑卡） -->
   <main id="page-records" class="page" hidden>
-    <h2 class="section-heading rec-heading">记录</h2>
     <div id="months" class="months"></div>
   </main>
 
@@ -140,10 +139,14 @@
     </div>
   </div>
 
-  <!-- 当日记录滑卡：点日期半屏弹出，上滑全屏，下滑/再点关闭 -->
+  <!-- 当日记录滑卡：点日期半屏弹出，上滑进全屏单页（左上角 ← 返回），下滑/再点关闭 -->
   <div id="sheet-backdrop" class="sheet-backdrop" hidden></div>
   <section id="day-sheet" class="day-sheet" hidden>
     <button class="sheet-handle" id="sheet-handle" aria-label="拖动"><span></span></button>
+    <div class="sheet-top">
+      <button id="sheet-back" class="sheet-back" aria-label="返回">←</button>
+      <span id="sheet-title" class="sheet-title"></span>
+    </div>
     <div id="day-sheet-body" class="sheet-body"></div>
   </section>
 
