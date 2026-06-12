@@ -1364,12 +1364,11 @@ body:not([data-page='home']) .chat-bar {
   z-index: 60;
   animation: fade-in 0.25s ease;
 }
-/* 全屏态：遮罩铺满全屏并用卡片同色 → 即使滑卡边缘有缝也不会露出 body 背景 */
+/* 全屏态：遮罩也铺主页同款渐变 → 即使有缝，露出的也是同一张渐变，边界隐形 */
 .sheet-backdrop.full {
-  background: rgba(250, 246, 249, 1);
-}
-[data-theme='dark'] .sheet-backdrop.full {
-  background: rgba(26, 25, 32, 1);
+  background-color: var(--bg-base);
+  background-image: var(--bg-image);
+  background-size: cover;
 }
 
 .day-sheet {
@@ -1400,13 +1399,20 @@ body:not([data-page='home']) .chat-bar {
 .day-sheet.half {
   transform: translateY(58%);
 }
-/* 全屏单页：上下钉死铺满整屏、去圆角，只能左上角 ← 退回
-   （top:0 + bottom:0 撑满，避免 100dvh 在 iOS 上算不准、底部留黑块） */
+/* 全屏单页：上下钉死铺满整屏、去圆角，只能左上角 ← 退回。
+   背景 = 主页同款弥散渐变（与 body 几何对齐，任何缝隙都露不出异色边） */
 .day-sheet.full {
   top: 0;
   height: auto;
   transform: translateY(0);
   border-radius: 0;
+  background-color: var(--bg-base);
+  background-image: var(--bg-image);
+  background-size: cover;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-top: none;
+  box-shadow: none;
 }
 .day-sheet.dragging {
   transition: none;
