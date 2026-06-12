@@ -129,17 +129,9 @@ header.topbar {
   font-family: 'Press Start 2P', monospace;
   font-size: 12px;
   font-weight: 400; /* 像素字体无粗体，合成加粗会糊 */
-  letter-spacing: 5px;
   color: var(--muted);
-  margin-bottom: 5px; /* 与下一行日期拉开，整段视觉对齐 */
-}
-
-/* 爪印：不吃像素字距，贴在 TABBY 末尾 */
-.app-title .paw {
-  font-family: initial;
-  letter-spacing: 0;
-  font-size: 11px;
-  margin-left: 2px;
+  margin-bottom: 5px;
+  letter-spacing: 8.6px; /* 撑开使 TABBY 右缘与下行日期对齐（实测自然宽63→对齐97.5） */
 }
 
 .today-line {
@@ -451,14 +443,14 @@ header.topbar {
   border-color: transparent;
 }
 
-/* 完成态：光紧贴粉色圆环外缘向外辐射，无缝衔接
-   （粉环 stroke-width 9，外缘半径 ≈ 54.5px，inset 1.5px 正好对齐） */
+/* 完成态：柔光以正 spread 顶到粉环外缘再向外辐射，亮区与粉环重叠 → 无暗缝
+   （::before 半径略小于粉环，藏在环下；spread 把实色推到环外缘）*/
 .done-btn.done::before {
   content: '';
   position: absolute;
-  inset: 1.5px;
+  inset: 5px;
   border-radius: 50%;
-  box-shadow: 0 0 7px #e88aa0, 0 0 18px rgba(232, 138, 160, 0.65);
+  box-shadow: 0 0 11px 4px #e88aa0, 0 0 22px 3px rgba(232, 138, 160, 0.55);
   pointer-events: none;
 }
 
