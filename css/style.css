@@ -22,6 +22,7 @@
   --accent-deep: #c46d88;
   --blue: #7c9cc4;
   --divider: color-mix(in srgb, #33405a 22%, transparent);
+  --chip-bg: #feeae8; /* 顶栏状态胶囊底（浅色） */
   --shadow: 0 8px 28px rgba(80, 100, 140, 0.14);
   --shadow-soft: 0 2px 12px rgba(80, 100, 140, 0.1);
   --radius: 22px;
@@ -45,6 +46,7 @@
   --accent-deep: #dd86a0;
   --blue: #8aa3c8;
   --divider: color-mix(in srgb, #efecf0 22%, transparent);
+  --chip-bg: #342b40; /* 顶栏状态胶囊底（深色） */
   --shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
   --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.35);
 }
@@ -129,6 +131,15 @@ header.topbar {
   font-weight: 400; /* 像素字体无粗体，合成加粗会糊 */
   letter-spacing: 5px;
   color: var(--muted);
+  margin-bottom: 5px; /* 与下一行日期拉开，整段视觉对齐 */
+}
+
+/* 爪印：不吃像素字距，贴在 TABBY 末尾 */
+.app-title .paw {
+  font-family: initial;
+  letter-spacing: 0;
+  font-size: 11px;
+  margin-left: 2px;
 }
 
 .today-line {
@@ -143,10 +154,9 @@ header.topbar {
   gap: 8px;
 }
 
-/* 顶栏状态胶囊：🩸经期/🔅排卵期/💜黄体期 Day N；正常不显示。
-   配色与用户对话泡泡一致 */
+/* 顶栏状态胶囊：🩸经期/🔅排卵期/💜黄体期 Day N；正常不显示。 */
 .mode-chip {
-  background: color-mix(in srgb, var(--accent) 50%, transparent);
+  background: var(--chip-bg);
   color: var(--text);
   height: 44px;
   display: inline-flex;
@@ -436,11 +446,17 @@ header.topbar {
   stroke: #e88aa0; /* 完成态圆环 = 睡醒时段的粉 */
 }
 
-/* 完成态：光从粉色圆环的外缘向外辐射（外阴影被裁掉内侧，内圈不发光） */
+/* 完成态：去掉外轮廓线（否则柔光与粉环之间有一条缝） */
+.done-btn.done {
+  border-color: transparent;
+}
+
+/* 完成态：光紧贴粉色圆环外缘向外辐射，无缝衔接
+   （粉环 stroke-width 9，外缘半径 ≈ 54.5px，inset 1.5px 正好对齐） */
 .done-btn.done::before {
   content: '';
   position: absolute;
-  inset: 1px;
+  inset: 1.5px;
   border-radius: 50%;
   box-shadow: 0 0 7px #e88aa0, 0 0 18px rgba(232, 138, 160, 0.65);
   pointer-events: none;
@@ -510,7 +526,7 @@ header.topbar {
   border-radius: 999px;
   padding: 9px 20px;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 400; /* 取消加粗 */
   color: var(--accent-deep);
   box-shadow: var(--shadow);
   animation: pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -804,11 +820,11 @@ header.topbar {
 }
 
 .chip.active {
-  background: var(--accent);
+  background: #9d8fe0; /* 晚饭后紫 */
   border-color: transparent;
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 4px 14px rgba(214, 128, 154, 0.35);
+  box-shadow: 0 4px 14px rgba(157, 143, 224, 0.35);
 }
 
 .severity-picker {
@@ -845,40 +861,40 @@ header.topbar {
   background: rgba(255, 255, 255, 0.07);
 }
 
-/* 程度从轻到重的渐变色（选项按钮与选中 chip 共用色阶） */
+/* 程度从轻到重的渐变色：晚饭后紫色阶（选项按钮与选中 chip 共用） */
 .severity-picker .options button.sev-1 {
-  background: #f4cbd6;
+  background: #ddd6f5;
   border-color: transparent;
-  color: #a05670;
+  color: #6555a8;
 }
 
 .severity-picker .options button.sev-2 {
-  background: #e69cb2;
+  background: #9d8fe0;
   border-color: transparent;
   color: #fff;
 }
 
 .severity-picker .options button.sev-3 {
-  background: #cf6d8c;
+  background: #7a68c8;
   border-color: transparent;
   color: #fff;
 }
 
 .chip.active.sev-1 {
-  background: #f4cbd6;
-  color: #a05670;
-  box-shadow: 0 4px 14px rgba(244, 203, 214, 0.5);
+  background: #ddd6f5;
+  color: #6555a8;
+  box-shadow: 0 4px 14px rgba(221, 214, 245, 0.5);
 }
 
 .chip.active.sev-2 {
-  background: #e69cb2;
+  background: #9d8fe0;
   color: #fff;
 }
 
 .chip.active.sev-3 {
-  background: #cf6d8c;
+  background: #7a68c8;
   color: #fff;
-  box-shadow: 0 4px 14px rgba(207, 109, 140, 0.45);
+  box-shadow: 0 4px 14px rgba(122, 104, 200, 0.45);
 }
 
 /* 症状卡默认收起 */
@@ -934,8 +950,8 @@ header.topbar {
 }
 
 .severity-picker .options button:active {
-  border-color: var(--accent);
-  color: var(--accent-deep);
+  border-color: #9d8fe0;
+  color: #7a68c8;
 }
 
 .severity-picker .options button.danger {
@@ -944,7 +960,7 @@ header.topbar {
 
 /* 当前已选的程度：描边标识 */
 .severity-picker .options button.cur {
-  outline: 2px solid var(--accent-deep);
+  outline: 2px solid #7a68c8;
   outline-offset: 1px;
   font-weight: 700;
 }
@@ -1256,6 +1272,7 @@ header.topbar {
   display: flex;
   align-items: baseline;
   gap: 8px;
+  white-space: nowrap; /* 猫脸 + 监听文字恒为一行，绝不换行 */
 }
 
 .chat-cat {
