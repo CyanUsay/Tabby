@@ -206,6 +206,7 @@ export function initRecords({ db, cfg, getEvents, today }) {
     sheetState = s;
     sheet.classList.toggle('full', s === 'full');
     sheet.classList.toggle('half', s === 'half');
+    backdrop.classList.toggle('full', s === 'full'); // 全屏时遮罩铺成卡片同色兜底
     sheet.style.transform = '';
     if (s === 'closed') {
       sheet.hidden = true; backdrop.hidden = true;
