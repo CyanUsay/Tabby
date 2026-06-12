@@ -219,7 +219,7 @@ function renderStats() {
       ? n > 0 ? `还有 ${n} 天` : '就这几天'
       : `${md(predictedPeriod.start)}~${md(predictedPeriod.end)}`;
   } else {
-    $('stat-predict').textContent = ovulationPending ? '排卵中…' : '—';
+    $('stat-predict').textContent = ovulationPending ? '待排卵' : '—';
   }
 
   // 栏三：今日症状 N 项 / 严重度三档
