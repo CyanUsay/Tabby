@@ -469,7 +469,7 @@ function initDoneButton() {
         celebrate('取消全选啦喵', false);
       } else {
         await markAll(true);
-        celebrate('太棒了喵！ฅ^•ﻌ•^ฅ', true);
+        celebrate('太棒了喵！୧ ₍៸៸᳐⦁𖥦⦁៸៸᳐ ₎', true);
       }
     }, HOLD_MS);
   });
