@@ -6,6 +6,7 @@ import { getChecklist } from './protocol.js';
 export function makeMockDb() {
   const intake = new Map(); // key: date|supplement|slot
   const symptoms = new Map(); // key: date|symptom
+  const notes = new Map(); // key: date
   // 演示用历史：让双周日历能看到荧光笔和下划线
   let cycleEvents = [
     { event: 'period_start', date: '2026-05-20' },
@@ -36,6 +37,13 @@ export function makeMockDb() {
       [...symptoms.values()].filter((r) => r.date === date),
     fetchSymptomsRange: async (from, to) =>
       [...symptoms.values()].filter((r) => r.date >= from && r.date <= to),
+    fetchIntakeByDate: async (date) =>
+      [...intake.values()].filter((r) => r.date === date && r.taken),
+    fetchSymptomsByDate: async (date) =>
+      [...symptoms.values()].filter((r) => r.date === date),
+    fetchNote: async (date) =>
+      notes.has(date) ? [{ body: notes.get(date) }] : [],
+    upsertNote: async (date, body) => { notes.set(date, body); return null; },
     insertCycleEvent: async (e) => {
       if (!cycleEvents.some((x) => x.event === e.event && x.date === e.date)) cycleEvents.push(e);
       return null;

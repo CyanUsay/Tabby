@@ -10,6 +10,7 @@ import { parseUtterance } from './ai.js';
 import { renderChecklist, intakeKey } from './checklist.js';
 import { renderSymptoms, severityLevel, severityLevelLabel } from './symptoms.js';
 import { initChat, addBubble } from './chat.js';
+import { initRecords } from './records.js';
 import { makeMockDb, mockParse } from './mock.js';
 
 const MOCK = new URLSearchParams(location.search).has('mock');
@@ -806,6 +807,37 @@ function initSymptomsToggle() {
   });
 }
 
+/* ---------- 底部 Tab 分页 ---------- */
+let records = null;
+function initTabs() {
+  records = initRecords({
+    db,
+    cfg: cycleConfig,
+    getEvents: () => state.cycleEvents,
+    today: state.today,
+  });
+  document.querySelectorAll('.tabbar .tab').forEach((tab) => {
+    tab.addEventListener('click', () => showPage(tab.dataset.page));
+  });
+  showPage('home');
+}
+
+function showPage(name) {
+  document.body.dataset.page = name;
+  for (const p of document.querySelectorAll('.page')) {
+    p.hidden = p.id !== `page-${name}`;
+  }
+  document.querySelectorAll('.tabbar .tab').forEach((t) => {
+    t.classList.toggle('active', t.dataset.page === name);
+  });
+  if (name === 'records') {
+    records.render(); // 每次进入重渲染（数据可能已变）
+  } else {
+    records?.closeSheet();
+  }
+  window.scrollTo(0, 0);
+}
+
 /* ---------- 启动 ---------- */
 async function boot() {
   recomputeMode(); // 先用空事件渲染本地清单（离线也能看）
@@ -814,6 +846,7 @@ async function boot() {
   initSymptomsToggle();
   initStatToggles();
   initVersionTag();
+  initTabs();
   const onWake = initChatCat();
   try {
     const calFrom = weekOf(addDays(state.today, -7))[0]; // 日历可见范围的第一天

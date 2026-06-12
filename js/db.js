@@ -29,6 +29,28 @@ export function fetchTodayIntake(date) {
   return rest(`intake_log?date=eq.${date}&select=*`);
 }
 
+// 记录页用：某天的全部已打卡补剂
+export function fetchIntakeByDate(date) {
+  return rest(`intake_log?date=eq.${date}&taken=eq.true&select=supplement,slot,dose,mode`);
+}
+
+export function fetchSymptomsByDate(date) {
+  return rest(`symptom_log?date=eq.${date}&select=symptom,severity,is_custom`);
+}
+
+// 每日备注（记录页当日记录的笔记栏）
+export function fetchNote(date) {
+  return rest(`daily_note?date=eq.${date}&select=body`);
+}
+
+export function upsertNote(date, body) {
+  return rest('daily_note?on_conflict=date', {
+    method: 'POST',
+    headers: UPSERT_HEADERS,
+    body: [{ date, body, updated_at: new Date().toISOString() }],
+  });
+}
+
 // rows: [{date, supplement, slot, dose, taken, mode}]
 export function upsertIntake(rows) {
   if (!rows.length) return Promise.resolve([]);
