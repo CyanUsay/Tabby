@@ -84,11 +84,11 @@ main {
 
 /* 主页：聊天条 + Tab 栏的留白；记录/数据：只留 Tab 栏 */
 #page-home {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 122px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 112px);
 }
 #page-records,
 #page-data {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 72px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 62px);
 }
 .page[hidden] {
   display: none;
@@ -1247,7 +1247,7 @@ header.topbar {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(env(safe-area-inset-bottom) + 50px); /* 坐在 Tab 栏之上 */
+  bottom: calc(env(safe-area-inset-bottom) + 40px); /* 坐在 Tab 栏之上 */
   padding: 12px 20px;
   z-index: 40;
 }
@@ -1265,9 +1265,9 @@ body:not([data-page='home']) .chat-bar {
   bottom: 0;
   z-index: 50;
   display: flex;
-  height: calc(env(safe-area-inset-bottom) + 50px);
-  /* 吃掉 16px 安全区留白 → 居中的图标整体下移 8px（贴近底部）；留 ≥10px 不压到 home 指示条 */
-  padding-bottom: max(10px, calc(env(safe-area-inset-bottom) - 16px));
+  /* 面板更薄：内容区 40px（v39 是 50px）→ 顶边再往下 10px */
+  height: calc(env(safe-area-inset-bottom) + 40px);
+  padding-bottom: env(safe-area-inset-bottom);
   background: var(--glass-strong);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
@@ -1280,18 +1280,18 @@ body:not([data-page='home']) .chat-bar {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
   background: none;
   border: none;
   color: var(--faint);
-  font-size: 11px;
+  font-size: 10px;
   cursor: pointer;
   transition: color 0.18s;
 }
 
 .tab svg {
-  width: 24px;
-  height: 24px;
+  width: 21px;
+  height: 21px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
@@ -1376,7 +1376,8 @@ body:not([data-page='home']) .chat-bar {
   height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: var(--glass-strong);
+  /* 近实色统一底：避免半透明透出底层不均渐变（底部发黑） */
+  background: rgba(250, 246, 249, 0.97);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
   border-top: 1px solid var(--glass-border);
@@ -1384,6 +1385,9 @@ body:not([data-page='home']) .chat-bar {
   box-shadow: 0 -10px 36px rgba(0, 0, 0, 0.22);
   transform: translateY(58%); /* 默认半屏 */
   transition: transform 0.34s cubic-bezier(0.32, 1.3, 0.5, 1);
+}
+[data-theme='dark'] .day-sheet {
+  background: rgba(26, 25, 32, 0.97);
 }
 .day-sheet.half {
   transform: translateY(58%);
