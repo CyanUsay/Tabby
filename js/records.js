@@ -179,6 +179,19 @@ export function initRecords({ db, cfg, getEvents, today }) {
     loadDay(d);
   }
 
+  // 滑卡打开时锁住底下页面滚动（iOS 经典 body-fixed 方案，防误触月历）
+  let scrollLockY = 0;
+  function lockScroll() {
+    scrollLockY = window.scrollY;
+    document.body.classList.add('no-scroll');
+    document.body.style.top = `-${scrollLockY}px`;
+  }
+  function unlockScroll() {
+    document.body.classList.remove('no-scroll');
+    document.body.style.top = '';
+    window.scrollTo(0, scrollLockY);
+  }
+
   function setSheetState(s) {
     sheetState = s;
     sheet.classList.toggle('full', s === 'full');
@@ -186,12 +199,14 @@ export function initRecords({ db, cfg, getEvents, today }) {
     sheet.style.transform = '';
     if (s === 'closed') {
       sheet.hidden = true; backdrop.hidden = true;
+      unlockScroll();
       selected = null;
       monthsEl.querySelectorAll('.bw-day.sel').forEach((n) => n.classList.remove('sel'));
     }
   }
 
   function openSheet(s) {
+    if (sheet.hidden) lockScroll();
     sheet.hidden = false; backdrop.hidden = false;
     requestAnimationFrame(() => setSheetState(s));
   }
@@ -283,8 +298,7 @@ export function initRecords({ db, cfg, getEvents, today }) {
       const row = document.createElement('div');
       row.className = 'day-slot';
       row.style.setProperty('--slot-color', SLOT_META[slot].color);
-      row.innerHTML = `<span class="day-slot-icon"></span><span class="day-slot-name"></span><span class="day-slot-items"></span>`;
-      row.querySelector('.day-slot-icon').textContent = SLOT_META[slot].icon;
+      row.innerHTML = `<span class="day-slot-name"></span><span class="day-slot-items"></span>`;
       row.querySelector('.day-slot-name').textContent = SLOT_LABELS[slot];
       row.querySelector('.day-slot-items').textContent = names.join(' + ');
       intakeCard.appendChild(row);
@@ -331,6 +345,8 @@ export function initRecords({ db, cfg, getEvents, today }) {
         const ok = document.createElement('button');
         ok.className = 'btn primary';
         ok.textContent = '确认';
+        ok.hidden = !ta.value.trim(); // 写了字才出现
+        ta.addEventListener('input', () => { ok.hidden = !ta.value.trim(); });
         ok.addEventListener('click', async () => {
           ok.disabled = true;
           try {

@@ -94,6 +94,14 @@ main {
   display: none;
 }
 
+/* 滑卡打开时锁住底下页面（防误触月历滚动）；top 由 JS 记录滚动位置 */
+body.no-scroll {
+  position: fixed;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+}
+
 button {
   font-family: inherit;
 }
@@ -1278,6 +1286,8 @@ body:not([data-page='home']) .chat-bar {
   font-size: 11px;
   cursor: pointer;
   transition: color 0.18s;
+  /* 栏变矮后图标居中只下移了一半，再补 4px 凑足整体 8px 下移 */
+  transform: translateY(4px);
 }
 
 .tab svg {
@@ -1439,7 +1449,7 @@ body:not([data-page='home']) .chat-bar {
 }
 
 .sheet-title {
-  font-size: 20px;
+  font-size: 21px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
@@ -1447,6 +1457,7 @@ body:not([data-page='home']) .chat-bar {
 .sheet-body {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain; /* 滚到头也不带动底下月历 */
   padding: 4px 18px calc(env(safe-area-inset-bottom) + 90px);
   -webkit-overflow-scrolling: touch;
 }
@@ -1458,7 +1469,7 @@ body:not([data-page='home']) .chat-bar {
 }
 
 .day-section-title {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--muted);
   margin-bottom: 10px;
@@ -1478,11 +1489,11 @@ body:not([data-page='home']) .chat-bar {
   border: 1px solid var(--glass-border);
   border-radius: 999px;
   padding: 6px 13px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 .day-chip.big {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   padding: 8px 16px;
 }
@@ -1492,29 +1503,26 @@ body:not([data-page='home']) .chat-bar {
 .day-chip.day-sym.sev-2 { background: #9d8fe0; color: #fff; border-color: transparent; }
 .day-chip.day-sym.sev-3 { background: #7a68c8; color: #fff; border-color: transparent; }
 
-/* 补剂时段行：图标 + 时段名（带色点）+ 内容 */
+/* 补剂时段行：时段名（时段色）+ 内容，无 emoji */
 .day-slot {
   display: flex;
   align-items: center;
   gap: 9px;
   padding: 6px 0;
 }
-.day-slot-icon {
-  font-size: 15px;
-}
 .day-slot-name {
-  font-size: 13.5px;
+  font-size: 14.5px;
   font-weight: 700;
   color: var(--slot-color);
   white-space: nowrap;
 }
 .day-slot-items {
-  font-size: 13.5px;
+  font-size: 14.5px;
   color: var(--text);
 }
 
 .day-hint {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--faint);
 }
 
@@ -1527,7 +1535,7 @@ body:not([data-page='home']) .chat-bar {
   background: var(--glass);
   color: var(--text);
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
   padding: 12px 14px;
 }
 .day-note:focus {
@@ -1536,7 +1544,7 @@ body:not([data-page='home']) .chat-bar {
 }
 
 .note-view {
-  font-size: 14px;
+  font-size: 15px;
   white-space: pre-wrap;
   word-break: break-word;
 }
