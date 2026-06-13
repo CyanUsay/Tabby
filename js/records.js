@@ -30,25 +30,14 @@ export function initRecords({ db, cfg, getEvents, today }) {
   const monthsEl = document.getElementById('months');
   const sheet = document.getElementById('day-sheet');
   const backdrop = document.getElementById('sheet-backdrop');
-  const sheetTargets = {
-    bodyEl: document.getElementById('day-sheet-body'),
-    titleEl: document.getElementById('sheet-title'),
-  };
-  const pageRecords = document.getElementById('page-records');
-  const pageDay = document.getElementById('page-day');
-  const dayTargets = {
-    bodyEl: document.getElementById('day-body'),
-    titleEl: document.getElementById('day-title'),
-  };
+  const sheetBody = document.getElementById('day-sheet-body');
+  const sheetTitle = document.getElementById('sheet-title');
   const handle = document.getElementById('sheet-handle');
-  const dayBack = document.getElementById('day-back');
+  const backBtn = document.getElementById('sheet-back');
 
   let symMap = new Map(); // date -> [症状]（PMS 色带浓度用）
   let selected = null;
-  let sheetState = 'closed'; // 'closed' | 'half'
-  let loadSeq = 0; // 异步加载竞态令牌
-  let savedScroll = 0; // 进当日页前的月历滚动位置
-  let entering = false; // 进当日页的过渡动画进行中
+  let sheetState = 'closed'; // 'closed' | 'half' | 'full'
 
   // ---- 月历渲染 ----
   function monthList() {
@@ -196,8 +185,8 @@ export function initRecords({ db, cfg, getEvents, today }) {
     for (const cell of monthsEl.querySelectorAll('.bw-day.rec')) {
       if (cell.__date === d) cell.classList.add('sel');
     }
-    openSheet();
-    loadDay(d, sheetTargets);
+    openSheet('half');
+    loadDay(d);
   }
 
   // 滑卡打开时锁住底下页面滚动（iOS 经典 body-fixed 方案，防误触月历）
@@ -213,95 +202,68 @@ export function initRecords({ db, cfg, getEvents, today }) {
     window.scrollTo(0, scrollLockY);
   }
 
-  function openSheet() {
+  // 滑卡定位全程用 top（不用 transform）：休止态靠 .half/.full 的 top 值，
+  // bottom:0 恒定 → 始终参照真实屏底（含安全区），杜绝 iOS transform+fixed 的
+  // 合成层漏边 / 安全区不覆盖问题。拖动时写 inline top 跟手，松手清掉交回 class。
+  function setSheetState(s) {
+    sheetState = s;
+    if (s === 'closed') {
+      sheet.classList.remove('full', 'half', 'dragging');
+      sheet.style.top = ''; // 交回 base（半屏 top），随即下滑
+      sheet.style.top = '100dvh'; // 滑出屏底
+      const done = (e) => {
+        if (e && e.propertyName !== 'top') return;
+        sheet.removeEventListener('transitionend', done);
+        sheet.hidden = true; backdrop.hidden = true;
+        sheet.style.top = '';
+        unlockScroll();
+        selected = null;
+        monthsEl.querySelectorAll('.bw-day.sel').forEach((n) => n.classList.remove('sel'));
+      };
+      sheet.addEventListener('transitionend', done);
+      setTimeout(() => done(), 420); // 兜底（transitionend 偶尔不触发）
+      return;
+    }
+    sheet.classList.toggle('full', s === 'full');
+    sheet.classList.toggle('half', s === 'half');
+    sheet.style.top = ''; // 交给 class 的 top，触发过渡
+  }
+
+  function openSheet(s) {
     if (sheet.hidden) lockScroll();
     sheet.hidden = false; backdrop.hidden = false;
-    requestAnimationFrame(() => {
-      sheetState = 'half';
-      sheet.classList.add('half');
-      sheet.style.transform = '';
-    });
+    sheet.classList.remove('full', 'half');
+    sheet.style.top = '100dvh'; // 先停屏底
+    void sheet.offsetHeight; // 强制回流，确保从屏底起滑
+    requestAnimationFrame(() => setSheetState(s));
   }
-
-  function closeSheet() {
-    if (entering) return; // 交接动画中不许打断
-    sheetState = 'closed';
-    sheet.classList.remove('half', 'dragging');
-    sheet.style.transform = '';
-    sheet.hidden = true; backdrop.hidden = true;
-    unlockScroll();
-    selected = null;
-    monthsEl.querySelectorAll('.bw-day.sel').forEach((n) => n.classList.remove('sel'));
-  }
+  function closeSheet() { if (sheetState !== 'closed') setSheetState('closed'); }
 
   backdrop.addEventListener('click', closeSheet);
+  backBtn.addEventListener('click', closeSheet); // 全屏单页：← 退回月历
 
-  // ---- 当日独立页面（普通文档流，不用 fixed 浮层 → 不存在 iOS 合成漏边）----
-  // 丝滑交接三步：滑卡顺势滑满屏 → 盖住时底下静默换页 → 滑卡淡出露出页面
-  function enterDayPage(d) {
-    if (entering) return;
-    entering = true;
-    savedScroll = scrollLockY; // 月历位置（body 此刻还锁着）
-    sheetState = 'closed'; // 不再响应拖动
-    sheet.classList.remove('half');
-    sheet.style.transform = 'translateY(0)'; // 基础 transition 带动画滑满屏
-
-    setTimeout(() => {
-      // 滑卡已盖满屏：底下静默换页
-      document.body.classList.remove('no-scroll');
-      document.body.style.top = '';
-      document.body.dataset.page = 'day';
-      pageRecords.hidden = true;
-      pageDay.hidden = false;
-      window.scrollTo(0, 0);
-      loadDay(d, dayTargets);
-      // 淡出滑卡，交接给页面
-      sheet.classList.add('exiting');
-      backdrop.classList.add('exiting');
-      setTimeout(() => {
-        sheet.hidden = true; backdrop.hidden = true;
-        sheet.classList.remove('exiting');
-        backdrop.classList.remove('exiting');
-        sheet.style.transform = '';
-        monthsEl.querySelectorAll('.bw-day.sel').forEach((n) => n.classList.remove('sel'));
-        selected = null;
-        entering = false;
-      }, 280);
-    }, 320);
-  }
-
-  function exitDayPage() {
-    pageDay.hidden = true;
-    pageRecords.hidden = false;
-    document.body.dataset.page = 'records';
-    window.scrollTo(0, savedScroll); // 回到离开时的月历位置
-  }
-
-  dayBack.addEventListener('click', exitDayPage);
-
-  // 拖动把手（半屏）：上滑进当日页面 / 下滑关闭
+  // 拖动把手（仅半屏可拖）：上滑进全屏单页 / 下滑关闭。拖动期间写 inline top 跟手
   (function dragHandle() {
-    let startY = 0, dy = 0, dragging = false;
+    let startY = 0, startTop = 0, dy = 0, dragging = false;
     handle.addEventListener('pointerdown', (e) => {
       if (sheetState !== 'half') return;
       dragging = true; startY = e.clientY; dy = 0;
+      startTop = sheet.getBoundingClientRect().top; // 当前 top（px）
       sheet.classList.add('dragging');
       handle.setPointerCapture?.(e.pointerId);
     });
     handle.addEventListener('pointermove', (e) => {
       if (!dragging) return;
       dy = e.clientY - startY;
-      const base = sheet.offsetHeight * 0.58;
-      sheet.style.transform = `translateY(${Math.max(0, base + dy)}px)`;
+      sheet.style.top = `${Math.max(0, startTop + dy)}px`;
     });
     const onUp = () => {
       if (!dragging) return;
       dragging = false;
       sheet.classList.remove('dragging');
-      const d = selected;
-      if (dy < -60 && d) enterDayPage(d);
-      else if (dy > 90) closeSheet();
-      else { sheet.style.transform = ''; sheet.classList.add('half'); }
+      if (dy < -60) setSheetState('full');
+      else if (dy > 90) setSheetState('closed');
+      else setSheetState('half');
     };
     handle.addEventListener('pointerup', onUp);
     handle.addEventListener('pointercancel', onUp);
@@ -317,12 +279,11 @@ export function initRecords({ db, cfg, getEvents, today }) {
     return { text: '正常', color: null };
   }
 
-  async function loadDay(d, { bodyEl, titleEl }) {
-    const seq = ++loadSeq;
+  async function loadDay(d) {
     const events = getEvents();
-    titleEl.textContent = `${md(d)} · 周${weekdayName(d)}`;
-    bodyEl.innerHTML = '';
-    bodyEl.scrollTop = 0;
+    sheetTitle.textContent = `${md(d)} · 周${weekdayName(d)}`;
+    sheetBody.innerHTML = '';
+    sheetBody.scrollTop = 0;
 
     // 周期状态 + 当日周期记录（合一张卡）
     const st = deriveState(events, d, cfg);
@@ -339,19 +300,19 @@ export function initRecords({ db, cfg, getEvents, today }) {
       }
       cycleCard.appendChild(row);
     }
-    bodyEl.appendChild(cycleCard);
+    sheetBody.appendChild(cycleCard);
 
     // 异步拉补剂 / 症状 / 备注
     const loading = card('');
     loading.appendChild(hint('读取中…'));
-    bodyEl.appendChild(loading);
+    sheetBody.appendChild(loading);
     let intake = [], symptoms = [], noteRows = [];
     try {
       [intake, symptoms, noteRows] = await Promise.all([
         db.fetchIntakeByDate(d), db.fetchSymptomsByDate(d), db.fetchNote(d),
       ]);
     } catch { /* 离线降级 */ }
-    if (seq !== loadSeq) return; // 期间又开了别的日期/页面
+    if (selected !== d) return; // 期间又切了日期
     loading.remove();
 
     // 补剂打卡：按时段分行，时段图标+色点（与今日安排一致）
@@ -370,7 +331,7 @@ export function initRecords({ db, cfg, getEvents, today }) {
       intakeCard.appendChild(row);
     }
     if (!any) intakeCard.appendChild(hint('这天没有打卡记录'));
-    bodyEl.appendChild(intakeCard);
+    sheetBody.appendChild(intakeCard);
 
     // 症状：紫色系 chip（程度色阶与症状卡一致）
     const logged = symptoms.filter((s) => s.severity > 0);
@@ -388,10 +349,10 @@ export function initRecords({ db, cfg, getEvents, today }) {
     } else {
       symCard.appendChild(hint('这天没有记录症状'));
     }
-    bodyEl.appendChild(symCard);
+    sheetBody.appendChild(symCard);
 
     // 备注：查看态（正文+编辑）⇄ 编辑态（输入框+确认）
-    bodyEl.appendChild(noteCard(d, noteRows[0]?.body ?? ''));
+    sheetBody.appendChild(noteCard(d, noteRows[0]?.body ?? ''));
   }
 
   function noteCard(d, initial) {
