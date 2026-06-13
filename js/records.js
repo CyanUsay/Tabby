@@ -171,7 +171,7 @@ export function initRecords({ db, cfg, getEvents, today }) {
     requestAnimationFrame(() => {
       const cur = monthsEl.children[MONTHS_BACK];
       if (!cur) return;
-      const bottomGap = 60; // Tab 栏视觉高度 + 余量
+      const bottomGap = 70; // Tab 栏视觉高度 + 余量（再上移 10px）
       const y = cur.getBoundingClientRect().bottom + window.scrollY - window.innerHeight + bottomGap;
       window.scrollTo(0, Math.max(0, y));
     });
