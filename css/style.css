@@ -94,16 +94,13 @@ main {
   display: none;
 }
 
-/* 滑卡打开时锁住底下页面（防误触月历滚动）；top 由 JS 记录滚动位置 */
+/* 滑卡打开时锁滚动：不再让 body 变 position:fixed（iOS 合成器地雷，疑似底部带子真凶）。
+   只用 overflow:hidden + 遮罩 touch-action 拦截触摸，body 保持普通文档流。 */
 body.no-scroll {
-  position: fixed;
-  left: 0;
-  right: 0;
   overflow: hidden;
 }
 
-/* 滑卡打开期间藏掉底栏：iOS 的 backdrop-filter 合成层会无视 z-index
-   把底栏顶到滑卡之上（全屏页底部那条"漏边"就是它）；反正盖住也点不到 */
+/* 滑卡打开期间藏掉底栏（被滑卡盖住也点不到） */
 body.no-scroll .tabbar {
   display: none;
 }
@@ -1371,6 +1368,8 @@ body:not([data-page='home']) .chat-bar {
   background: rgba(0, 0, 0, 0.35);
   z-index: 60;
   animation: fade-in 0.25s ease;
+  touch-action: none; /* 拦截触摸，替代 body-fixed 锁滚动 */
+  overscroll-behavior: none;
 }
 
 .day-sheet {
