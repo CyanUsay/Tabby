@@ -623,7 +623,9 @@ header.topbar {
   font-variant-numeric: tabular-nums;
   white-space: nowrap; /* "6/22~6/29"永不折行 */
   flex: none;
-  text-align: right;
+  width: 72px; /* 固定数值列：文字居中对齐（最宽 6/22~6/29 约 65px 也容得下）*/
+  text-align: center;
+  margin-right: 4px; /* 离卡片右缘透气 */
 }
 
 /* ---------- 时间线 + 时段卡 ---------- */
