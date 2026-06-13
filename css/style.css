@@ -1385,6 +1385,9 @@ body:not([data-page='home']) .chat-bar {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
+  /* 整张滑卡吃掉触摸：从滑卡上开始的手势(含把手拖动)整段 touch-action:none，
+     哪怕快速甩到月历上也不会带动底下滚动。内容区另开 pan-y 自滚 */
+  touch-action: none;
   /* 背景：纯色兜底 + 渐变图。size:cover 定义上铺满整框（含底部安全区），
      杜绝 100dvh/position 在 iOS 算不准导致安全区只露纯色兜底=底部带子。
      不用 background-attachment:fixed —— 它在 iOS 上几乎是坏的 */
@@ -1468,6 +1471,7 @@ body:not([data-page='home']) .chat-bar {
   flex: 1;
   overflow-y: auto;
   overscroll-behavior: contain; /* 滚到头也不带动底下月历 */
+  touch-action: pan-y; /* 仅放行自身竖向滚动（滑卡其余区域 touch-action:none） */
   padding: 4px 18px calc(env(safe-area-inset-bottom) + 90px);
   -webkit-overflow-scrolling: touch;
 }
