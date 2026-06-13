@@ -564,19 +564,24 @@ header.topbar {
 
 .stats {
   flex: 1;
+  min-width: 0; /* 允许统计列收缩，永不把内容顶出卡片右缘 */
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 16px;
+  gap: 12px;
   border-left: 1px solid var(--line);
   padding-left: 16px;
 }
 
-/* 统计位是按钮：点一下切换该栏显示的数据 */
+/* 统计位是按钮：点一下切换该栏显示的数据。
+   图标在左竖跨两行，标签在上、数值在下——上下堆叠后单栏只需 ~130px 宽，
+   横排（图标+标签+数值同行）在 375pt 屏放不下、且 iOS 文字更宽必溢出，故改堆叠。 */
 .stat {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 1px;
   align-items: center;
-  gap: 10px;
   background: none;
   border: none;
   padding: 0;
@@ -593,6 +598,9 @@ header.topbar {
 }
 
 .stat-icon {
+  grid-column: 1;
+  grid-row: 1 / 3; /* 图标竖跨标签+数值两行 */
+  align-self: center;
   width: 32px;
   height: 32px;
   min-width: 32px;
@@ -609,23 +617,26 @@ header.topbar {
 .stat-icon[data-tint='orange'] { background: rgba(240, 169, 92, 0.2); color: #d99547; }
 
 .stat-label {
-  font-size: 13.5px;
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 13px;
+  line-height: 1.25;
   color: var(--muted);
-  flex: 1;
-  min-width: 0; /* 允许标签收缩，宽数值(如 6/27~7/4)才不会被挤出界、破坏右对齐 */
   white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis; /* 极端窄屏兜底，正常不会触发 */
 }
 
 .stat-value {
-  font-size: 14.5px;
+  grid-column: 2;
+  grid-row: 2;
+  font-size: 15px;
+  line-height: 1.2;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   white-space: nowrap; /* "6/22~6/29"永不折行 */
-  flex: none;
-  width: 82px; /* 固定数值列居中对齐：容下最宽值"还有 14 天"(~69px chromium，iOS 更宽)+居中留白 */
-  text-align: center;
-  margin-right: 2px; /* 离卡片右缘透气 */
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ---------- 时间线 + 时段卡 ---------- */
