@@ -612,7 +612,9 @@ header.topbar {
   font-size: 13.5px;
   color: var(--muted);
   flex: 1;
+  min-width: 0; /* 允许标签收缩，宽数值(如 6/27~7/4)才不会被挤出界、破坏右对齐 */
   white-space: nowrap;
+  overflow: hidden;
 }
 
 .stat-value {
@@ -620,6 +622,8 @@ header.topbar {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   white-space: nowrap; /* "6/22~6/29"永不折行 */
+  flex: none;
+  text-align: right;
 }
 
 /* ---------- 时间线 + 时段卡 ---------- */
@@ -1316,7 +1320,7 @@ body:not([data-page='home']) .chat-bar {
 }
 
 .month-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--muted);
   margin: 0 2px 8px;
@@ -1324,20 +1328,20 @@ body:not([data-page='home']) .chat-bar {
 
 .bw-day.rec {
   cursor: pointer;
-  padding: 4px 0 6px;
+  padding: 5px 0 7px;
 }
 
-/* 记录页月历比主页两周历放大一个字号（数字 12.5→13.5，星期 10→11） */
+/* 记录页月历再大一号（数字 13.5→14.5，星期 11→12） */
 .months .bw-day .num {
-  width: 27px;
-  height: 27px;
-  font-size: 13.5px;
+  width: 29px;
+  height: 29px;
+  font-size: 14.5px;
 }
 .months .bw-dow {
-  font-size: 11px;
+  font-size: 12px;
 }
 .months .bw-day .hl {
-  height: 24px;
+  height: 26px;
 }
 
 .bw-day.empty {
