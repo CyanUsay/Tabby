@@ -189,13 +189,20 @@ export function initRecords({ db, cfg, getEvents, today }) {
     loadDay(d);
   }
 
-  // 锁滚动：不再把 body 变 position:fixed（iOS 合成器地雷，疑似底部带子真凶）。
-  // 改为全屏遮罩 touch-action:none 拦截触摸 + body overflow:hidden，body 永不 fixed。
+  // 锁滚动：绝不把 body 变 position:fixed（那会触发 iOS "fixed body + fixed 背景"
+  // 合成 bug，底部安全区露出 --bg-base 成带）。改用拦截 touchmove：
+  // 放行滑卡内部(#day-sheet-body)滚动，其余触摸一律 preventDefault，挡住底下月历。
+  function preventBgScroll(e) {
+    if (e.target.closest && e.target.closest('#day-sheet-body')) return;
+    e.preventDefault();
+  }
   function lockScroll() {
     document.body.classList.add('no-scroll');
+    document.addEventListener('touchmove', preventBgScroll, { passive: false });
   }
   function unlockScroll() {
     document.body.classList.remove('no-scroll');
+    document.removeEventListener('touchmove', preventBgScroll, { passive: false });
   }
 
   // 滑卡定位全程用 top（不用 transform）：休止态靠 .half/.full 的 top 值，
