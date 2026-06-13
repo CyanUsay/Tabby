@@ -12,7 +12,7 @@
 - 设计语言：弥散渐变背景（杏花粉→碧落蓝）+ 磨砂玻璃块面；品牌粉 `#D6809A` 体系管交互
   状态；四时段色（睡醒粉 #E88AA0/午橙 #F0A95C/晚紫 #9D8FE0/睡前蓝 #7EB3E8）管归属；
   经期红 `#D6283B` 是唯一高饱和信号色。完整色卡在代码里：基础变量在
-  `css/style.css` 顶部 `:root`（暗色变体在 `.dark`），四时段色定义在 `js/checklist.js`。
+  `css/style.css` 顶部 `:root`（暗色变体在 `[data-theme='dark']`），四时段色定义在 `js/checklist.js`。
 
 ## 基础设施（手动配好的部分）
 
@@ -74,6 +74,32 @@
   remove 支持 cycle_events/symptom_entries 按条删任意过去记录。删除有三道防线：
   前端白名单校验、删除意图防火墙（话里没有删/撤/错等字眼一律丢弃 remove，防上文
   污染）、删前快照可"撤销"重插。
+
+## 页面结构与记录页（底部 Tab 三页）
+
+- 底部 Tab 栏三页：主页 `#page-home` / 记录 `#page-records` / 数据 `#page-data`，
+  `js/app.js` 的 `showPage()` 切换（toggle `.page[hidden]` + body[data-page]）。聊天条
+  只在主页、坐在 Tab 栏之上；数据页暂占位（待做趋势图）。
+- 记录页 `js/records.js`：连续月历（往前 11 + 当月 + 往后 2 = 14 个月），复用主页两周历
+  可视化（经期/PMS 荧光带、出血/果冻下划线、排卵橙圈、PMS 浓度随严重度）；进入自动滚到
+  "刚好显示完当月"。点日期 → 当日滑卡：半屏 `top:58dvh` ↔ 上滑全屏 `top:0`，← 退回；
+  内容分块卡：周期状态(带状态色 chip)/当日周期事件/补剂打卡/症状+程度/备注。
+- 备注存 `daily_note` 表（迁移 0005，date 主键，RLS 全开含 delete）；记录页另用
+  `fetchIntakeByDate/fetchSymptomsByDate/fetchNote/upsertNote`（db.js + mock.js 都有）。
+
+## ⚠️ iOS PWA 致命坑（踩了十几版才破，详见 `docs/ios-bottom-band-bug.md`）
+
+- **`position: fixed` 的元素 + `background-attachment: fixed` 的背景**，在 iOS standalone +
+  安全区下会让背景图被裁到"视觉视口"（不含底部安全区），露出 `background-color`（--bg-base）
+  成一条横"带子"。这是顽固到换 9 种背景方案都治不好的真凶。
+- 因此 **body 锁滚动绝不能用 `position: fixed`**（会触发此 bug，底部漏 --bg-base 带）。
+  现行方案：`body.no-scroll{overflow:hidden}` + 拦截 `touchmove`（放行滑卡内
+  `#day-sheet-body` 滚动，其余 `preventDefault`），body 全程普通文档流。
+- 滑卡定位**全程用 `top`、不用 `transform`**（transform 也会触发类似合成层裁剪）。
+  整张 `.day-sheet` 设 `touch-action:none`（手势从滑卡起即不滚动底下月历），
+  `.sheet-body` 单独 `touch-action:pan-y` 放行自身滚动。
+- 调底部相关样式时，**模拟器（无安全区）永远看不到带子**——必须发真机全屏图，用
+  PIL 逐像素量（带子色恒 = `--bg-base` = `#c8d9ec` = `(200,217,236)`）才看得准。
 
 ## 用户身体相关的已定参数（别擅自改）
 
