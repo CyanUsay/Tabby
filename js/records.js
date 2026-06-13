@@ -189,17 +189,13 @@ export function initRecords({ db, cfg, getEvents, today }) {
     loadDay(d);
   }
 
-  // 滑卡打开时锁住底下页面滚动（iOS 经典 body-fixed 方案，防误触月历）
-  let scrollLockY = 0;
+  // 锁滚动：不再把 body 变 position:fixed（iOS 合成器地雷，疑似底部带子真凶）。
+  // 改为全屏遮罩 touch-action:none 拦截触摸 + body overflow:hidden，body 永不 fixed。
   function lockScroll() {
-    scrollLockY = window.scrollY;
     document.body.classList.add('no-scroll');
-    document.body.style.top = `-${scrollLockY}px`;
   }
   function unlockScroll() {
     document.body.classList.remove('no-scroll');
-    document.body.style.top = '';
-    window.scrollTo(0, scrollLockY);
   }
 
   // 滑卡定位全程用 top（不用 transform）：休止态靠 .half/.full 的 top 值，
