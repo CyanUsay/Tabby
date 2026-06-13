@@ -1378,7 +1378,9 @@ body:not([data-page='home']) .chat-bar {
   left: 0;
   right: 0;
   top: 58dvh; /* 半屏：占屏幕下 42% */
-  bottom: 0;
+  /* 底边顶出安全区：iOS 下 bottom:0 + 渐变都到不了物理屏底，安全区会露出 --bg-base 纯色成带。
+     把元素底边压到屏底之下，背景 cover 必然盖满那截安全区 */
+  bottom: calc(-1 * env(safe-area-inset-bottom) - 2px);
   z-index: 61;
   max-width: 480px;
   margin: 0 auto;
