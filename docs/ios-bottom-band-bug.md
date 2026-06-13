@@ -1,7 +1,26 @@
 # Tabby PWA · iOS 底部"带子"渲染 Bug 诊断文档
 
+> ✅ **已破案（v50 验证 / v51 修复）。** 真凶见文末"结案"。
+
 > 给排查者：这是一个 iOS Safari / 主屏 PWA 独有的渲染 bug。Android / 桌面 Chrome 一切正常。
 > 已尝试约 9 个版本（v41–v49）都没解决。下面是完整前因后果、像素证据、所有失败尝试。
+
+## 结案（root cause）
+
+**真凶 = 滑卡打开时把 `body` 设成 `position: fixed`（用于锁滚动），而 `body` 同时带着
+`background-image` + `background-attachment: fixed`。**
+
+iOS Safari（standalone PWA + 安全区）下，元素**同时是 `position: fixed` 且背景是
+`attachment: fixed`** 时，背景图的绘制被裁到"视觉视口"（不含底部安全区），那截只剩
+`background-color`（`--bg-base` = `#c8d9ec` = 实测的 `(200,217,236)`）。滑卡自身背景同样被裁，
+盖不住，于是 body 的 `--bg-base` 从底部安全区透出 = 带子。主页因底栏盖住该截而看不到。
+
+**修复**：滚动锁不再用 `body { position: fixed }`，改为拦截 `touchmove`（放行滑卡内部滚动，
+其余 preventDefault）。`body` 全程普通文档流，`attachment: fixed` 背景即正常铺满含安全区。
+v50 去掉 body-fixed 后带子立即消失，像素复测底部为连续渐变（无 `--bg-base` 硬边）。
+
+> 教训：**`position: fixed` 的元素 + `background-attachment: fixed` 的背景，在 iOS 是会炸的组合。**
+> 锁滚动优先用拦截 touchmove，避免把 body 变 fixed。
 
 ---
 
