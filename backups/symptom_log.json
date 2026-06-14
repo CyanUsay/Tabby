@@ -1,1 +1,122 @@
-[]
+[
+  {
+    "date": "2026-06-10",
+    "symptom": "发热感",
+    "severity": 0,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-10T15:00:15.277242+00:00"
+  },
+  {
+    "date": "2026-06-10",
+    "symptom": "噩梦",
+    "severity": 0,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-10T15:00:18.600691+00:00"
+  },
+  {
+    "date": "2026-06-10",
+    "symptom": "头痛",
+    "severity": 0,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-10T14:59:50.922008+00:00"
+  },
+  {
+    "date": "2026-06-10",
+    "symptom": "睡眠障碍",
+    "severity": 0,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-10T18:44:36.058611+00:00"
+  },
+  {
+    "date": "2026-06-10",
+    "symptom": "精力",
+    "severity": 0,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-10T15:01:13.310336+00:00"
+  },
+  {
+    "date": "2026-06-11",
+    "symptom": "心慌",
+    "severity": 1,
+    "is_custom": true,
+    "note": null,
+    "created_at": "2026-06-11T06:10:44.535959+00:00"
+  },
+  {
+    "date": "2026-06-11",
+    "symptom": "情绪低落",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-11T07:26:34.742219+00:00"
+  },
+  {
+    "date": "2026-06-11",
+    "symptom": "睡眠障碍",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-11T06:17:08.490144+00:00"
+  },
+  {
+    "date": "2026-06-11",
+    "symptom": "精力",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-11T07:26:19.292352+00:00"
+  },
+  {
+    "date": "2026-06-12",
+    "symptom": "头痛",
+    "severity": 2,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-12T20:10:14.988516+00:00"
+  },
+  {
+    "date": "2026-06-13",
+    "symptom": "发热感",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-13T12:04:27.309682+00:00"
+  },
+  {
+    "date": "2026-06-13",
+    "symptom": "精力",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-13T12:04:33.581396+00:00"
+  },
+  {
+    "date": "2026-06-14",
+    "symptom": "发热感",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-14T06:47:50.934814+00:00"
+  },
+  {
+    "date": "2026-06-14",
+    "symptom": "心慌",
+    "severity": 1,
+    "is_custom": true,
+    "note": null,
+    "created_at": "2026-06-14T06:06:51.663821+00:00"
+  },
+  {
+    "date": "2026-06-14",
+    "symptom": "睡眠障碍",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-14T06:07:02.330817+00:00"
+  }
+]
