@@ -30,7 +30,7 @@ const state = {
   cycleEvents: [],
   degraded: false,
   // 撤销"刚刚那条"用：最近一次聊天确认的快照
-  lastCommit: null, // { prevIntake: [[key,row|null]], symptoms: [name], cycle: {event,date}|null }
+  lastCommit: null, // { prevIntake: [可重插的完整行], symptoms: [name], cycles, deletedCycles, deletedSymptoms }
 };
 
 const md = (s) => `${Number(s.slice(5, 7))}/${Number(s.slice(8))}`;
@@ -287,6 +287,15 @@ function renderAll() {
 function recomputeMode() {
   state.modeInfo = deriveState(state.cycleEvents, state.today, cycleConfig);
   state.checklist = getChecklist(state.modeInfo.mode);
+}
+
+// 某天的模式 / 应服清单（补记往日补剂用：往日可能处于经期/PMS，剂量与是否含 B6 都不同，
+// 必须按那天的状态取清单，而不是套用今天的）。今天直接复用已算好的，省一次推算。
+function modeForDate(date) {
+  return date === state.today ? state.modeInfo.mode : deriveState(state.cycleEvents, date, cycleConfig).mode;
+}
+function checklistForDate(date) {
+  return date === state.today ? state.checklist : getChecklist(modeForDate(date));
 }
 
 // 周期事件确认后，用一句话反馈推算结果（三层判定的结果在这里变得可见）
@@ -728,15 +737,8 @@ async function executeRemove(remove, snapshot) {
     ...(last.deletedCycles ?? []).map((c) => db.insertCycleEvent(c)),
   ]);
   if ((last.deletedSymptoms ?? []).length) await db.upsertSymptoms(last.deletedSymptoms);
-  if (last.prevIntake.length) {
-    const rows = last.prevIntake.map(([key, row]) => {
-      if (row) return row;
-      const [supplement, slot] = key.split('|');
-      const item = state.checklist.find((i) => i.supplement === supplement && i.slot === slot);
-      return intakeRowOf(item ?? { supplement, slot, dose: '' }, false);
-    });
-    await db.upsertIntake(rows);
-  }
+  // prevIntake 已是可直接重插的完整行（含 date/mode/dose），直接 upsert 还原
+  if (last.prevIntake?.length) await db.upsertIntake(last.prevIntake);
   state.lastCommit = null;
   return '撤销好了喵，就当刚才什么都没发生 (=^･ω･^=)';
 }
@@ -750,12 +752,19 @@ async function commitDraft(draft) {
   }
 
   if (draft.intake.length) {
+    // 撤销快照：今天的取 intakeMap 里的原行；往日的没加载进内存 → 还原成 taken=false
+    // （intake_log 无 delete，撤销一次往日打卡 = 把它改回未打卡）
     snapshot.prevIntake = draft.intake.map((i) => {
-      const key = `${i.supplement}|${i.slot}`;
-      return [key, state.intakeMap.get(key) ?? null];
+      const prior = i.date === state.today ? state.intakeMap.get(intakeKey(i)) : null;
+      return prior
+        ? { ...prior }
+        : { date: i.date, supplement: i.supplement, slot: i.slot, dose: i.dose, taken: false, mode: modeForDate(i.date) };
     });
     await db.upsertIntake(
-      draft.intake.map((i) => ({ ...i, date: state.today, mode: state.modeInfo.mode }))
+      draft.intake.map((i) => ({
+        date: i.date, supplement: i.supplement, slot: i.slot, dose: i.dose,
+        taken: i.taken, mode: modeForDate(i.date),
+      }))
     );
   }
   if (draft.symptoms.length) {
@@ -793,7 +802,13 @@ async function commitDraft(draft) {
   maybePromptSuspectBleed();
 
   if (removeMsg) return removeMsg;
-  return draft.cycles.length ? cycleFeedback(draft.cycles) : null;
+  if (draft.cycles.length) return cycleFeedback(draft.cycles);
+  // 补记往日补剂：回一句确认是哪几天，免得主人以为记到了今天
+  const pastDates = [...new Set(draft.intake.filter((i) => i.date !== state.today).map((i) => i.date))].sort();
+  if (pastDates.length) {
+    return `补记好啦喵！${pastDates.map(md).join('、')} 的补剂打卡都记上了 ✓ (=^･ω･^=)`;
+  }
+  return null;
 }
 
 /* ---------- 症状卡收起/展开 ---------- */
@@ -884,6 +899,7 @@ async function boot() {
       date: state.today,
       mode: state.modeInfo.mode,
       checklist: state.checklist,
+      checklistForDate, // 补记往日补剂：按那天的模式取清单（落库前白名单/剂量快照用）
       fixedSymptoms: state.fixedSymptoms,
       // 最近的周期记录（倒序）：让 AI 能精确定位"删掉X号那条/整个经期"
       cycleEvents: state.cycleEvents.slice(0, 20).map(({ event, date }) => ({ event, date })),

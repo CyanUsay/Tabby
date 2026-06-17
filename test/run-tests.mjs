@@ -364,6 +364,22 @@ test('不在应服清单内的 intake 项被丢弃', () => {
   assert.equal(filtered[0].supplement, 'VC');
   assert.equal(filtered[0].dose, '500 mg'); // 剂量快照来自清单，不信 AI
 });
+test('补记往日：按各自 date 取清单，剂量随那天的模式，date 带回', () => {
+  // 解析器：经期日给经期清单（镁 300mg），其余给日常（镁 200mg）
+  const checklistForDate = (d) => getChecklist(d === '2026-06-09' ? 'period' : 'daily');
+  const filtered = filterIntakeToChecklist(
+    [
+      { supplement: '甘氨酸镁', slot: 'bedtime', taken: true, date: '2026-06-09' }, // 经期日
+      { supplement: '甘氨酸镁', slot: 'bedtime', taken: false }, // 缺 date → 回落今天（日常）
+      { supplement: 'B6', slot: 'lunch', taken: true, date: '2026-06-09' }, // 经期无 B6 → 丢弃
+    ],
+    checklistForDate,
+    '2026-06-12'
+  );
+  assert.equal(filtered.length, 2);
+  assert.deepEqual(filtered[0], { date: '2026-06-09', supplement: '甘氨酸镁', slot: 'bedtime', dose: '300 mg', taken: true });
+  assert.deepEqual(filtered[1], { date: '2026-06-12', supplement: '甘氨酸镁', slot: 'bedtime', dose: '200 mg', taken: false });
+});
 test('sanitizeRemove：cycle_events 过滤编造项、去重、空则整体置 null', () => {
   const r = sanitizeRemove({
     what: 'cycle_events',
