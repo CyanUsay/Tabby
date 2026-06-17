@@ -2,6 +2,28 @@
 // 全部数据在内存里，不发任何网络请求——保证测试绝不碰真实数据库。
 
 import { getChecklist } from './protocol.js';
+import { addDays, parseDate, fmt } from './dates.js';
+
+// "昨天/前天/X号" → YYYY-MM-DD（X号晚于今天则取上个月），其余回落今天
+function resolveDate(text, today) {
+  if (text.includes('前天')) return addDays(today, -2);
+  if (text.includes('昨天')) return addDays(today, -1);
+  const m = text.match(/(\d{1,2})\s*号/);
+  if (m) {
+    const base = parseDate(today);
+    let d = fmt(new Date(base.getFullYear(), base.getMonth(), Number(m[1])));
+    if (d > today) d = fmt(new Date(base.getFullYear(), base.getMonth() - 1, Number(m[1])));
+    return d;
+  }
+  return today;
+}
+
+// 找出话里点名的补剂（"镁"= 甘氨酸镁）
+function matchSup(text, checklist) {
+  for (const c of checklist) if (text.includes(c.supplement)) return c.supplement;
+  if (text.includes('镁')) return '甘氨酸镁';
+  return null;
+}
 
 export function makeMockDb() {
   const intake = new Map(); // key: date|supplement|slot
@@ -97,20 +119,21 @@ export function mockParse(text, context) {
         return resolve(result);
       }
 
-      // 局部打卡："晚饭的吃了" / "刚吃了镁"
-      if (text.includes('晚饭') && text.includes('吃')) {
-        result.intake = checklist
-          .filter((c) => c.slot === 'dinner')
-          .map((c) => ({ supplement: c.supplement, slot: c.slot, taken: true }));
-      } else if (text.includes('吃了镁') || text.includes('刚吃了镁')) {
-        result.intake = checklist
-          .filter((c) => c.supplement === '甘氨酸镁')
-          .map((c) => ({ supplement: c.supplement, slot: c.slot, taken: true }));
-      } else if (text.includes('都吃了')) {
-        result.intake = checklist.map((c) => ({ supplement: c.supplement, slot: c.slot, taken: true }));
-        if (text.includes('漏了VC') || text.includes('没吃VC')) {
-          result.intake = result.intake.map((i) => ({ ...i, taken: i.supplement !== 'VC' }));
+      // 局部打卡：支持补记往日（"昨天都吃了" / "6月10号除了镁都吃了" / "昨天忘记吃VE了"）
+      const date = resolveDate(text, context.date); // 没提日期 → 今天
+      const except = matchSup(text, checklist);
+      const row = (c, taken) => ({ supplement: c.supplement, slot: c.slot, taken, date });
+      if (text.includes('都吃了')) {
+        result.intake = checklist.map((c) => row(c, true));
+        if ((text.includes('除了') || text.includes('漏了') || text.includes('没吃')) && except) {
+          result.intake = result.intake.map((i) => (i.supplement === except ? { ...i, taken: false } : i));
         }
+      } else if ((text.includes('忘记') || text.includes('没吃') || text.includes('漏了')) && except) {
+        result.intake = checklist.filter((c) => c.supplement === except).map((c) => row(c, false));
+      } else if (text.includes('晚饭') && text.includes('吃')) {
+        result.intake = checklist.filter((c) => c.slot === 'dinner').map((c) => row(c, true));
+      } else if (text.includes('吃了镁') || text.includes('刚吃了镁')) {
+        result.intake = checklist.filter((c) => c.supplement === '甘氨酸镁').map((c) => row(c, true));
       }
 
       if (text.includes('胸胀')) result.symptoms.push({ symptom: '胸胀', severity: 2, is_custom: false });
@@ -137,14 +160,12 @@ export function mockParse(text, context) {
         result.cycle = { event: 'bleed_light', date: context.date };
       }
       if (text.includes('昨天') && text.includes('血')) {
-        const d = new Date(context.date); d.setDate(d.getDate() - 1);
-        const y = d.toISOString().slice(0, 10);
+        const y = addDays(context.date, -1);
         result.cycle = [{ event: 'bleed_light', date: y }, { event: 'bleed_light', date: context.date }];
       }
       if (text.includes('果冻') || text.includes('蛋清') || text.includes('拉丝')) {
         if (text.includes('这两天') || text.includes('昨天')) {
-          const d = new Date(context.date); d.setDate(d.getDate() - 1);
-          result.cycle = [{ event: 'jelly', date: d.toISOString().slice(0, 10) }, { event: 'jelly', date: context.date }];
+          result.cycle = [{ event: 'jelly', date: addDays(context.date, -1) }, { event: 'jelly', date: context.date }];
         } else {
           result.cycle = { event: 'jelly', date: context.date };
         }

@@ -14,6 +14,7 @@ import {
 import { severityLabel } from './symptoms.js';
 
 const SLOT_SHORT = { wake: '醒', lunch: '午', dinner: '晚', bedtime: '睡前' };
+const md = (s) => `${Number(s.slice(5, 7))}/${Number(s.slice(8))}`;
 const REMOVE_LABELS = {
   last: '撤销刚才记的那条',
   cycle_today: '删掉今天的周期记录',
@@ -77,7 +78,7 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, o
 
     // 落库前的安全规整：intake 白名单过滤、symptoms/cycle/remove 规整
     const draft = {
-      intake: filterIntakeToChecklist(result.intake, context.checklist),
+      intake: filterIntakeToChecklist(result.intake, context.checklistForDate ?? context.checklist, context.date),
       symptoms: sanitizeSymptoms(result.symptoms, context.fixedSymptoms),
       cycles: sanitizeCycles(result.cycle),
       remove: sanitizeRemove(result.remove),
@@ -114,12 +115,13 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, o
     logEl.appendChild(card);
     scrollToBottom();
 
-    // "今天都吃了"= 覆盖全清单且全勾 → 折叠成一行摘要，不列整个 list
-    function isFullDefault() {
+    // "今天都吃了"= 覆盖今天全清单且全勾 → 折叠成一行摘要，不列整个 list。
+    // 补记往日（date≠今天）照常逐条列出（带日期），不折叠，免得摘要文案误称"今日"。
+    function isTodayFullDefault() {
       return (
         draft.intake.length > 0 &&
         draft.intake.length === context.checklist.length &&
-        draft.intake.every((i) => i.taken)
+        draft.intake.every((i) => i.taken && i.date === context.date)
       );
     }
 
@@ -159,7 +161,7 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, o
         }
       }
 
-      if (isFullDefault()) {
+      if (isTodayFullDefault()) {
         const sum = document.createElement('div');
         sum.className = 'preview-summary';
         sum.textContent = `✓ 今日清单全部完成（${draft.intake.length} 项）`;
@@ -172,7 +174,9 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, o
           row.innerHTML = `<span class="mark"></span><span class="pname"></span><span class="meta"></span>`;
           row.querySelector('.mark').textContent = item.taken ? '✓' : '✕';
           row.querySelector('.pname').textContent = item.supplement;
-          row.querySelector('.meta').textContent = `${SLOT_SHORT[item.slot]} · ${item.dose}`;
+          // 补记往日时行内带上日期，避免主人误以为记到了今天
+          const datePart = item.date && item.date !== context.date ? `${md(item.date)} · ` : '';
+          row.querySelector('.meta').textContent = `${datePart}${SLOT_SHORT[item.slot]} · ${item.dose}`;
           row.addEventListener('click', () => {
             item.taken = !item.taken;
             rebuild();
@@ -241,7 +245,7 @@ export function initChat({ logEl, input, sendBtn, getContext, parse, onCommit, o
       const hasAdds = draft.intake.length || draft.symptoms.length || draft.cycles.length;
       confirm.textContent = draft.remove
         ? hasAdds ? '确认修改' : '确认删除' // 又删又记（如"9号那条改成果冻"）是修改
-        : isFullDefault()
+        : isTodayFullDefault()
           ? '确认按默认记录'
           : '确认记录';
       confirm.addEventListener('click', async () => {

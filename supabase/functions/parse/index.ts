@@ -37,7 +37,7 @@ ${(ctx.cycleEvents ?? []).map((e) => `${e.date} ${e.event}`).join('、') || '（
 用户会用自然语言描述服用情况和身体状况。请解析为 JSON，严格只输出一个 JSON 对象，
 不要 markdown，不要解释。结构：
 {
-  "intake": [ {"supplement":"VC","slot":"lunch","taken":true}, ... ],
+  "intake": [ {"supplement":"VC","slot":"lunch","taken":true,"date":"YYYY-MM-DD"}, ... ],
   "symptoms": [ {"symptom":"胸胀","severity":2,"is_custom":false}, ... ],
   "cycle": null 或 {"event":"...","date":"YYYY-MM-DD"} 或 多天补记时的数组 [{...},{...}],
   "remove": null 或 {"what":"last"|"cycle_today"|"symptoms_today"},
@@ -51,6 +51,13 @@ ${(ctx.cycleEvents ?? []).map((e) => `${e.date} ${e.event}`).join('、') || '（
   · "今天都吃了" → 才输出全部清单 taken=true
   · "漏了X / 没吃X"（在"都吃了"语境下）→ 除 X 外全部 taken=true，X 为 taken=false
   · "X没吃" 单说 → 只输出 X taken=false
+- 每个 intake 条目都必须带 date（YYYY-MM-DD）。没提日期 → 填今天 ${ctx.date}；
+  补记过去某天则按下面推算 date（同一句多天就各记各的 date）：
+  · "昨天…" = ${ctx.date} 减 1 天；"前天…" = 减 2 天
+  · "X号…/几月几号…"（如"10号""6月10号"）→ 取今天所在月份的 X 日；该日期若晚于今天则取上个月
+  · 例："昨天都吃了" → 昨天的全部清单 taken=true（date 全=昨天）
+  · 例："昨天忘记吃VE了 / 昨天VE没吃" → 只输出 VE 一条 taken=false（date=昨天）
+  · 例："6月10号的补剂除了镁都吃了" → 10号全部清单 taken=true，但甘氨酸镁 taken=false（date 全=10号）
 - intake 里的 supplement 和 slot 必须严格取自应服清单，不得编造
 - 只提到症状不影响 intake；只提到 intake 不动 symptoms
 - 失眠/噩梦/吓醒/睡不好/半夜醒 → 统一记 symptom "睡眠障碍"

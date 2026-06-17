@@ -40,16 +40,21 @@ export async function parseUtterance(userText, context) {
   return data.result;
 }
 
-// 白名单过滤：AI 返回的 intake 必须能在应服清单中按 (supplement, slot) 命中，
-// 否则丢弃（防模型编造补剂名写库）；dose 一律取清单快照，不信 AI 的。
-export function filterIntakeToChecklist(intake, checklist) {
+// 白名单过滤：AI 返回的 intake 必须能在【对应日期】的应服清单中按 (supplement, slot)
+// 命中，否则丢弃（防模型编造补剂名写库）；dose 一律取清单快照，不信 AI 的。
+// checklistOrFn 可为数组（单一清单）或 (date)=>清单——补记往日时那天的模式/剂量
+// 可能与今天不同，必须按各自 date 取清单。item.date 非法/缺失时回落到 defaultDate。
+export function filterIntakeToChecklist(intake, checklistOrFn, defaultDate = null) {
   if (!Array.isArray(intake)) return [];
+  const resolve = typeof checklistOrFn === 'function' ? checklistOrFn : () => checklistOrFn;
   const out = [];
   for (const item of intake) {
+    const date = isDateStr(item?.date) ? item.date : defaultDate;
+    const checklist = resolve(date) ?? [];
     const hit = checklist.find(
       (c) => c.supplement === item.supplement && c.slot === item.slot
     );
-    if (hit) out.push({ supplement: hit.supplement, slot: hit.slot, dose: hit.dose, taken: !!item.taken });
+    if (hit) out.push({ date, supplement: hit.supplement, slot: hit.slot, dose: hit.dose, taken: !!item.taken });
   }
   return out;
 }
