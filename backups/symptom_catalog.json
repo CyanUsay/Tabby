@@ -21,7 +21,7 @@
     "name": "心慌",
     "is_fixed": false,
     "first_seen": "2026-06-11",
-    "count": 4
+    "count": 7
   },
   {
     "name": "情绪低落",
@@ -34,6 +34,12 @@
     "is_fixed": true,
     "first_seen": "2026-06-10",
     "count": 0
+  },
+  {
+    "name": "睡醒心慌",
+    "is_fixed": false,
+    "first_seen": "2026-06-19",
+    "count": 2
   },
   {
     "name": "精力",
@@ -52,5 +58,11 @@
     "is_fixed": true,
     "first_seen": "2026-06-10",
     "count": 0
+  },
+  {
+    "name": "食欲大",
+    "is_fixed": false,
+    "first_seen": "2026-06-15",
+    "count": 2
   }
 ]
