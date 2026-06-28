@@ -262,5 +262,269 @@
     "is_custom": false,
     "note": null,
     "created_at": "2026-06-21T06:39:31.705056+00:00"
+  },
+  {
+    "date": "2026-06-22",
+    "symptom": "发热感",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-22T07:42:51.567577+00:00"
+  },
+  {
+    "date": "2026-06-22",
+    "symptom": "情绪低落",
+    "severity": 2,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-22T03:01:11.72326+00:00"
+  },
+  {
+    "date": "2026-06-22",
+    "symptom": "睡眠障碍",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-22T03:01:04.752746+00:00"
+  },
+  {
+    "date": "2026-06-22",
+    "symptom": "精力",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-22T03:01:07.675723+00:00"
+  },
+  {
+    "date": "2026-06-23",
+    "symptom": "发热感",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-23T07:32:25.342957+00:00"
+  },
+  {
+    "date": "2026-06-23",
+    "symptom": "情绪低落",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-23T07:33:01.408982+00:00"
+  },
+  {
+    "date": "2026-06-23",
+    "symptom": "睡眠障碍",
+    "severity": 2,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-23T07:32:29.841812+00:00"
+  },
+  {
+    "date": "2026-06-23",
+    "symptom": "精力",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-23T07:32:45.405233+00:00"
+  },
+  {
+    "date": "2026-06-23",
+    "symptom": "胸胀",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-23T07:32:48.920947+00:00"
+  },
+  {
+    "date": "2026-06-23",
+    "symptom": "腹痛",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-23T10:04:00.809223+00:00"
+  },
+  {
+    "date": "2026-06-24",
+    "symptom": "动力低",
+    "severity": 1,
+    "is_custom": true,
+    "note": null,
+    "created_at": "2026-06-24T10:36:13.580786+00:00"
+  },
+  {
+    "date": "2026-06-24",
+    "symptom": "感官过载",
+    "severity": 2,
+    "is_custom": true,
+    "note": null,
+    "created_at": "2026-06-24T14:32:53.180272+00:00"
+  },
+  {
+    "date": "2026-06-24",
+    "symptom": "睡眠障碍",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-24T01:22:45.309354+00:00"
+  },
+  {
+    "date": "2026-06-24",
+    "symptom": "胸胀",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-24T01:23:00.730389+00:00"
+  },
+  {
+    "date": "2026-06-25",
+    "symptom": "情绪低落",
+    "severity": 2,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-25T17:31:15.624886+00:00"
+  },
+  {
+    "date": "2026-06-25",
+    "symptom": "烦躁",
+    "severity": 3,
+    "is_custom": true,
+    "note": null,
+    "created_at": "2026-06-25T17:31:22.950774+00:00"
+  },
+  {
+    "date": "2026-06-25",
+    "symptom": "睡眠障碍",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-25T05:09:02.250841+00:00"
+  },
+  {
+    "date": "2026-06-25",
+    "symptom": "胸胀",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-25T05:08:55.215432+00:00"
+  },
+  {
+    "date": "2026-06-25",
+    "symptom": "腹痛",
+    "severity": 2,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-25T05:08:51.915364+00:00"
+  },
+  {
+    "date": "2026-06-26",
+    "symptom": "低血糖",
+    "severity": 3,
+    "is_custom": true,
+    "note": null,
+    "created_at": "2026-06-26T18:01:09.495793+00:00"
+  },
+  {
+    "date": "2026-06-26",
+    "symptom": "发热感",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-26T05:32:34.846574+00:00"
+  },
+  {
+    "date": "2026-06-26",
+    "symptom": "情绪低落",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-26T05:32:54.872613+00:00"
+  },
+  {
+    "date": "2026-06-26",
+    "symptom": "睡眠障碍",
+    "severity": 2,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-26T05:32:52.168392+00:00"
+  },
+  {
+    "date": "2026-06-26",
+    "symptom": "睡醒心慌",
+    "severity": 2,
+    "is_custom": true,
+    "note": null,
+    "created_at": "2026-06-26T05:34:08.02354+00:00"
+  },
+  {
+    "date": "2026-06-26",
+    "symptom": "胸胀",
+    "severity": 2,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-26T05:32:39.652355+00:00"
+  },
+  {
+    "date": "2026-06-26",
+    "symptom": "腹痛",
+    "severity": 2,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-26T06:21:49.21556+00:00"
+  },
+  {
+    "date": "2026-06-27",
+    "symptom": "睡眠障碍",
+    "severity": 2,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-27T05:23:49.85992+00:00"
+  },
+  {
+    "date": "2026-06-27",
+    "symptom": "精力",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-27T05:23:51.126067+00:00"
+  },
+  {
+    "date": "2026-06-27",
+    "symptom": "胸胀",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-27T05:24:11.851806+00:00"
+  },
+  {
+    "date": "2026-06-27",
+    "symptom": "腹痛",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-27T15:07:07.959089+00:00"
+  },
+  {
+    "date": "2026-06-28",
+    "symptom": "睡眠障碍",
+    "severity": 2,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-28T05:54:31.421562+00:00"
+  },
+  {
+    "date": "2026-06-28",
+    "symptom": "精力",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-28T05:54:38.696913+00:00"
+  },
+  {
+    "date": "2026-06-28",
+    "symptom": "腹痛",
+    "severity": 1,
+    "is_custom": false,
+    "note": null,
+    "created_at": "2026-06-28T05:54:26.862656+00:00"
   }
 ]

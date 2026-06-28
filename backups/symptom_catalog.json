@@ -1,5 +1,17 @@
 [
   {
+    "name": "低血糖",
+    "is_fixed": false,
+    "first_seen": "2026-06-26",
+    "count": 1
+  },
+  {
+    "name": "动力低",
+    "is_fixed": false,
+    "first_seen": "2026-06-24",
+    "count": 2
+  },
+  {
     "name": "发热感",
     "is_fixed": true,
     "first_seen": "2026-06-10",
@@ -30,6 +42,18 @@
     "count": 0
   },
   {
+    "name": "感官过载",
+    "is_fixed": false,
+    "first_seen": "2026-06-24",
+    "count": 1
+  },
+  {
+    "name": "烦躁",
+    "is_fixed": false,
+    "first_seen": "2026-06-25",
+    "count": 2
+  },
+  {
     "name": "睡眠障碍",
     "is_fixed": true,
     "first_seen": "2026-06-10",
@@ -39,7 +63,7 @@
     "name": "睡醒心慌",
     "is_fixed": false,
     "first_seen": "2026-06-19",
-    "count": 2
+    "count": 3
   },
   {
     "name": "精力",
