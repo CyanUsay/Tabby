@@ -1438,5 +1438,410 @@
     "taken": true,
     "mode": "pms",
     "updated_at": "2026-06-28T01:56:30.813+00:00"
+  },
+  {
+    "date": "2026-06-28",
+    "supplement": "DHC B群",
+    "slot": "wake",
+    "dose": "推荐量一半",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-29T05:33:57.16+00:00"
+  },
+  {
+    "date": "2026-06-28",
+    "supplement": "VA",
+    "slot": "lunch",
+    "dose": "2500 单位",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-29T05:33:57.161+00:00"
+  },
+  {
+    "date": "2026-06-28",
+    "supplement": "VC",
+    "slot": "dinner",
+    "dose": "500 mg",
+    "taken": false,
+    "mode": "period",
+    "updated_at": "2026-06-29T05:33:57.161+00:00"
+  },
+  {
+    "date": "2026-06-28",
+    "supplement": "VC",
+    "slot": "lunch",
+    "dose": "500 mg",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-29T05:33:57.161+00:00"
+  },
+  {
+    "date": "2026-06-28",
+    "supplement": "VD",
+    "slot": "lunch",
+    "dose": "5000 IU",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-29T05:33:57.161+00:00"
+  },
+  {
+    "date": "2026-06-28",
+    "supplement": "VE",
+    "slot": "dinner",
+    "dose": "200 mg",
+    "taken": false,
+    "mode": "period",
+    "updated_at": "2026-06-29T05:33:57.161+00:00"
+  },
+  {
+    "date": "2026-06-28",
+    "supplement": "甘氨酸镁",
+    "slot": "bedtime",
+    "dose": "300 mg",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-29T05:33:57.161+00:00"
+  },
+  {
+    "date": "2026-06-28",
+    "supplement": "鱼油",
+    "slot": "dinner",
+    "dose": "1 颗",
+    "taken": false,
+    "mode": "period",
+    "updated_at": "2026-06-29T05:33:57.161+00:00"
+  },
+  {
+    "date": "2026-06-28",
+    "supplement": "鱼油",
+    "slot": "lunch",
+    "dose": "2 颗",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-29T05:33:57.161+00:00"
+  },
+  {
+    "date": "2026-06-29",
+    "supplement": "DHC B群",
+    "slot": "wake",
+    "dose": "推荐量一半",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-29T16:47:18.818+00:00"
+  },
+  {
+    "date": "2026-06-29",
+    "supplement": "VA",
+    "slot": "lunch",
+    "dose": "2500 单位",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-29T16:47:18.818+00:00"
+  },
+  {
+    "date": "2026-06-29",
+    "supplement": "VC",
+    "slot": "dinner",
+    "dose": "500 mg",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-29T16:47:18.818+00:00"
+  },
+  {
+    "date": "2026-06-29",
+    "supplement": "VC",
+    "slot": "lunch",
+    "dose": "500 mg",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-29T16:47:18.818+00:00"
+  },
+  {
+    "date": "2026-06-29",
+    "supplement": "VD",
+    "slot": "lunch",
+    "dose": "5000 IU",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-29T16:47:18.818+00:00"
+  },
+  {
+    "date": "2026-06-29",
+    "supplement": "VE",
+    "slot": "dinner",
+    "dose": "200 mg",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-29T16:47:18.818+00:00"
+  },
+  {
+    "date": "2026-06-29",
+    "supplement": "甘氨酸镁",
+    "slot": "bedtime",
+    "dose": "300 mg",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-29T16:47:18.818+00:00"
+  },
+  {
+    "date": "2026-06-29",
+    "supplement": "鱼油",
+    "slot": "dinner",
+    "dose": "1 颗",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-29T16:47:18.818+00:00"
+  },
+  {
+    "date": "2026-06-29",
+    "supplement": "鱼油",
+    "slot": "lunch",
+    "dose": "2 颗",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-29T16:47:18.818+00:00"
+  },
+  {
+    "date": "2026-06-30",
+    "supplement": "DHC B群",
+    "slot": "wake",
+    "dose": "推荐量一半",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-30T16:16:54.243+00:00"
+  },
+  {
+    "date": "2026-06-30",
+    "supplement": "VA",
+    "slot": "lunch",
+    "dose": "2500 单位",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-30T16:16:54.243+00:00"
+  },
+  {
+    "date": "2026-06-30",
+    "supplement": "VC",
+    "slot": "dinner",
+    "dose": "500 mg",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-30T16:16:54.243+00:00"
+  },
+  {
+    "date": "2026-06-30",
+    "supplement": "VC",
+    "slot": "lunch",
+    "dose": "500 mg",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-30T16:16:54.243+00:00"
+  },
+  {
+    "date": "2026-06-30",
+    "supplement": "VD",
+    "slot": "lunch",
+    "dose": "5000 IU",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-30T16:16:54.243+00:00"
+  },
+  {
+    "date": "2026-06-30",
+    "supplement": "VE",
+    "slot": "dinner",
+    "dose": "200 mg",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-30T16:16:54.243+00:00"
+  },
+  {
+    "date": "2026-06-30",
+    "supplement": "甘氨酸镁",
+    "slot": "bedtime",
+    "dose": "300 mg",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-30T16:16:54.243+00:00"
+  },
+  {
+    "date": "2026-06-30",
+    "supplement": "鱼油",
+    "slot": "dinner",
+    "dose": "1 颗",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-30T16:16:54.243+00:00"
+  },
+  {
+    "date": "2026-06-30",
+    "supplement": "鱼油",
+    "slot": "lunch",
+    "dose": "2 颗",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-06-30T16:16:54.243+00:00"
+  },
+  {
+    "date": "2026-07-02",
+    "supplement": "DHC B群",
+    "slot": "wake",
+    "dose": "推荐量一半",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-07-02T17:06:48.338+00:00"
+  },
+  {
+    "date": "2026-07-02",
+    "supplement": "VA",
+    "slot": "lunch",
+    "dose": "2500 单位",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-07-02T17:06:48.338+00:00"
+  },
+  {
+    "date": "2026-07-02",
+    "supplement": "VC",
+    "slot": "dinner",
+    "dose": "500 mg",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-07-02T17:06:48.338+00:00"
+  },
+  {
+    "date": "2026-07-02",
+    "supplement": "VC",
+    "slot": "lunch",
+    "dose": "500 mg",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-07-02T17:06:48.338+00:00"
+  },
+  {
+    "date": "2026-07-02",
+    "supplement": "VD",
+    "slot": "lunch",
+    "dose": "5000 IU",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-07-02T17:06:48.338+00:00"
+  },
+  {
+    "date": "2026-07-02",
+    "supplement": "VE",
+    "slot": "dinner",
+    "dose": "200 mg",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-07-02T17:06:48.338+00:00"
+  },
+  {
+    "date": "2026-07-02",
+    "supplement": "甘氨酸镁",
+    "slot": "bedtime",
+    "dose": "300 mg",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-07-02T17:06:48.338+00:00"
+  },
+  {
+    "date": "2026-07-02",
+    "supplement": "鱼油",
+    "slot": "dinner",
+    "dose": "1 颗",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-07-02T17:06:48.338+00:00"
+  },
+  {
+    "date": "2026-07-02",
+    "supplement": "鱼油",
+    "slot": "lunch",
+    "dose": "2 颗",
+    "taken": true,
+    "mode": "period",
+    "updated_at": "2026-07-02T17:06:48.338+00:00"
+  },
+  {
+    "date": "2026-07-03",
+    "supplement": "DHC B群",
+    "slot": "wake",
+    "dose": "推荐量一半",
+    "taken": true,
+    "mode": "daily",
+    "updated_at": "2026-07-03T12:00:45.569+00:00"
+  },
+  {
+    "date": "2026-07-03",
+    "supplement": "VA",
+    "slot": "lunch",
+    "dose": "2500 单位",
+    "taken": true,
+    "mode": "daily",
+    "updated_at": "2026-07-03T12:00:50.296+00:00"
+  },
+  {
+    "date": "2026-07-03",
+    "supplement": "VC",
+    "slot": "dinner",
+    "dose": "500 mg",
+    "taken": true,
+    "mode": "daily",
+    "updated_at": "2026-07-03T12:00:52.504+00:00"
+  },
+  {
+    "date": "2026-07-03",
+    "supplement": "VC",
+    "slot": "lunch",
+    "dose": "500 mg",
+    "taken": true,
+    "mode": "daily",
+    "updated_at": "2026-07-03T12:00:50.296+00:00"
+  },
+  {
+    "date": "2026-07-03",
+    "supplement": "VD",
+    "slot": "lunch",
+    "dose": "5000 IU",
+    "taken": true,
+    "mode": "daily",
+    "updated_at": "2026-07-03T12:00:50.296+00:00"
+  },
+  {
+    "date": "2026-07-03",
+    "supplement": "VE",
+    "slot": "dinner",
+    "dose": "200 mg",
+    "taken": false,
+    "mode": "daily",
+    "updated_at": "2026-07-03T12:01:08.406+00:00"
+  },
+  {
+    "date": "2026-07-03",
+    "supplement": "甘氨酸镁",
+    "slot": "bedtime",
+    "dose": "200 mg",
+    "taken": true,
+    "mode": "daily",
+    "updated_at": "2026-07-03T17:32:21.131+00:00"
+  },
+  {
+    "date": "2026-07-03",
+    "supplement": "鱼油",
+    "slot": "dinner",
+    "dose": "1 颗",
+    "taken": true,
+    "mode": "daily",
+    "updated_at": "2026-07-03T12:00:52.504+00:00"
+  },
+  {
+    "date": "2026-07-03",
+    "supplement": "鱼油",
+    "slot": "lunch",
+    "dose": "1 颗",
+    "taken": true,
+    "mode": "daily",
+    "updated_at": "2026-07-03T12:00:50.296+00:00"
   }
 ]
